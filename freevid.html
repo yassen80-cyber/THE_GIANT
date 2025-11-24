@@ -1,0 +1,173 @@
+<!-- updated freevid.html with responsive video player and modal removed open button + back button --><!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>الفيديوهات المجانية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220; --card:#0f1724; --muted:#9aa4b2; --accent:#2b8cff;
+      --glass: rgba(255,255,255,0.03); --radius:14px;
+    }
+    *{box-sizing:border-box;font-family:'Cairo',sans-serif}
+    body{margin:0;background:linear-gradient(180deg,#07080b 0%, var(--bg) 100%);color:#eef2f7;min-height:100vh;padding:28px;}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#8ed0ff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#012133;font-size:20px;}
+    h1{font-size:20px;margin:0}
+    .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .search{background:var(--card);border:1px solid rgba(255,255,255,0.03);padding:10px 12px;border-radius:12px;display:flex;align-items:center;gap:8px;min-width:240px;}
+    .search input{background:transparent;border:0;outline:none;color:inherit;width:100%;}
+    .btn{background:linear-gradient(180deg,var(--accent),#1b6fe6);padding:10px 14px;border-radius:12px;border:0;color:white;cursor:pointer;}
+    .back-btn{
+      background:linear-gradient(180deg,#13c18d,#0f9b6f);
+      padding:10px 16px;
+      border-radius:12px;
+      border:0;
+      color:white;
+      cursor:pointer;
+      font-weight:600;
+      box-shadow:0 0 10px rgba(0,0,0,0.3);
+      transition:0.25s;
+    }
+    .back-btn:hover{transform:scale(1.05);}main{margin-top:12px}
+.grid{display:grid;gap:14px;grid-template-columns: repeat(auto-fill,minmax(240px,1fr));}
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), var(--glass));border-radius:var(--radius);padding:12px;border:1px solid rgba(255,255,255,0.03);}    
+.thumb{height:140px;border-radius:10px;overflow:hidden;background:#0a0f16;display:flex;align-items:center;justify-content:center;}
+.thumb img, .thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px}
+.title{font-weight:600;font-size:15px}
+.sub{color:var(--muted);font-size:13px}
+.actions{display:flex;gap:8px;align-items:center}
+.small{padding:7px 9px;border-radius:9px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;cursor:pointer;font-size:13px}
+.no-data{padding:40px;text-align:center;color:var(--muted);border-radius:12px;border:1px dashed rgba(255,255,255,0.03);}/* full screen */
+
+#fullscreenPlayer{ position:fixed;inset:0;background:#000;display:none;z-index:2000; align-items:center;justify-content:center;padding:0;margin:0; } #fullscreenPlayer video, #fullscreenPlayer iframe{ width:100vw;height:100vh;object-fit:contain;background:#000; } #closeFull{ position:fixed;top:14px;left:14px;color:white;background:rgba(0,0,0,0.5); border:0;font-size:26px;padding:6px 12px;border-radius:8px;cursor:pointer;z-index:2100; }
+
+@media(max-width:720px){ .player{height:300px} .thumb{height:120px} .search{min-width:140px} } </style>
+
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">TG</div>
+      <div><h1>الفيديوهات المجانية</h1><div style="color:var(--muted);font-size:13px">شاهد واستفاد يا صديقي</div></div>
+    </div><button class="back-btn" onclick="location.href='dashboard.html'">⬅ رجوع للوحة التحكم</button>
+
+<div class="controls">
+  <div class="search" role="search">
+    <input id="searchInput" placeholder="ابحث باسم الفيديو..." />
+  </div>
+  <select id="sortSelect" class="small"><option value="new">الأحدث</option><option value="old">الأقدم</option><option value="title-asc">العنوان (أ-ي)</option></select>
+  <button id="refreshBtn" class="btn">تحديث</button>
+</div>
+
+  </header>  <main>
+    <div id="count" style="color:var(--muted);margin-bottom:10px">تحميل...</div>
+    <div id="list" class="grid"></div>
+    <div id="empty" class="no-data" style="display:none;margin-top:14px">مفيش فيديوهات حاليا.</div>
+  </main>  <div id="fullscreenPlayer"><button id="closeFull">✕</button><div id="fsContainer"></div></div>  <script type="module">
+    const firebaseConfig = {apiKey:"AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",authDomain:"ylearn-fe1fa.firebaseapp.com",databaseURL:"https://ylearn-fe1fa-default-rtdb.firebaseio.com",projectId:"ylearn-fe1fa",storageBucket:"ylearn-fe1fa.firebasestorage.app",messagingSenderId:"1092852055944",appId:"1:1092852055944:web:85c3df7cf4c0cbcdca043d"};
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const listEl=document.getElementById('list');
+    const countEl=document.getElementById('count');
+    const emptyEl=document.getElementById('empty');
+    const searchInput=document.getElementById('searchInput');
+    const sortSelect=document.getElementById('sortSelect');
+    const refreshBtn=document.getElementById('refreshBtn');
+
+    const fullscreen=document.getElementById('fullscreenPlayer');
+    const fsContainer=document.getElementById('fsContainer');
+    const closeFull=document.getElementById('closeFull');
+
+    let videos=[];
+
+    function formatDate(ts){try{const d=new Date(Number(ts));return d.toLocaleString('ar-EG',{year:'numeric',month:'short',day:'numeric'});}catch{return ''}}
+    function isYouTube(url){return /(?:youtube\.com|youtu\.be)/i.test(url)}
+    function getID(url){const m=url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);return m?m[1]:null}
+
+    function createCard(item){
+      const c=document.createElement('article');c.className='card';
+      const t=document.createElement('div');t.className='thumb';
+
+      if(isYouTube(item.link)){
+        const id=getID(item.link);
+        const img=document.createElement('img');img.src=`https://i.ytimg.com/vi/${id}/hqdefault.jpg`;t.appendChild(img);
+      } else {
+        const v=document.createElement('video');v.src=item.link;v.muted=true;v.preload='metadata';t.appendChild(v);
+      }
+
+      const meta=document.createElement('div');meta.className='meta';
+      const left=document.createElement('div');
+      const title=document.createElement('div');title.className='title';title.textContent=item.title;
+      const sub=document.createElement('div');sub.className='sub';sub.textContent=formatDate(item.createdAt);
+      left.appendChild(title);left.appendChild(sub);
+
+      const actions=document.createElement('div');actions.className='actions';
+      const play=document.createElement('button');play.className='small';play.textContent='تشغيل';
+      play.onclick=()=>openFull(item);
+      actions.appendChild(play);
+
+      meta.appendChild(left);meta.appendChild(actions);
+
+      c.appendChild(t);c.appendChild(meta);
+      return c;
+    }
+
+    function render(list){
+      listEl.innerHTML='';
+      if(!list.length){emptyEl.style.display='block';countEl.textContent='0 فيديو';return;}
+      emptyEl.style.display='none';countEl.textContent=list.length+' فيديو';
+      list.forEach(i=>listEl.appendChild(createCard(i)));
+    }
+
+    function apply(){
+      const q=searchInput.value.toLowerCase();
+      let f=[...videos];
+      if(q) f=f.filter(i=>i.title.toLowerCase().includes(q));
+      const s=sortSelect.value;
+      if(s==='new') f.sort((a,b)=>b.createdAt-a.createdAt);
+      else if(s==='old') f.sort((a,b)=>a.createdAt-b.createdAt);
+      else f.sort((a,b)=>a.title.localeCompare(b.title,'ar'));
+      render(f);
+    }
+
+    function openFull(item){
+      fsContainer.innerHTML='';
+      let el;
+      if(isYouTube(item.link)){
+        const id=getID(item.link);
+        el=document.createElement('iframe');
+        el.src=`https://www.youtube.com/embed/${id}?autoplay=1`;
+        el.allow='autoplay';
+        el.style.border='0';
+      } else {
+        el=document.createElement('video');el.src=item.link;el.controls=true;el.autoplay=true;
+      }
+      fsContainer.appendChild(el);
+      fullscreen.style.display='flex';
+    }
+
+    closeFull.onclick=()=>{
+      fullscreen.style.display='none';fsContainer.innerHTML='';
+    };
+
+    const freeRef=ref(db,'freevid');
+    onValue(freeRef,snap=>{
+      const d=snap.val();videos=[];
+      if(d){Object.keys(d).forEach(k=>videos.push({id:k,title:d[k].title||'',link:d[k].link||'',createdAt:Number(d[k].createdAt)||0}));}
+      videos.sort((a,b)=>b.createdAt-a.createdAt);
+      apply();
+    });
+
+    searchInput.oninput=apply;
+    sortSelect.onchange=apply;
+    refreshBtn.onclick=apply;
+  </script></body>
+</html>
