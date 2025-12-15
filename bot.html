@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE GIANT - المساعد الذكي</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+margin:0;
+font-family:'Cairo',sans-serif;
+background:linear-gradient(135deg,#0b0f19,#0f172a);
+color:#fff;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+}
+
+#chat-interface{
+width:95%;
+max-width:600px;
+height:92vh;
+background:#111827;
+border-radius:22px;
+border:2px solid #00b2ff;
+display:flex;
+flex-direction:column;
+overflow:hidden;
+box-shadow:0 20px 40px rgba(0,0,0,.6);
+}
+
+#chat-header{
+background:linear-gradient(90deg,#00b2ff,#008bcc);
+padding:18px;
+text-align:center;
+font-size:1.4rem;
+font-weight:700;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+#back-btn{
+background:rgba(255,255,255,.15);
+border:none;
+color:#fff;
+padding:6px 14px;
+border-radius:20px;
+cursor:pointer;
+font-size:.9rem;
+transition:.3s;
+}
+#back-btn:hover{
+background:#fff;
+color:#111;
+}
+
+#chat-messages{
+flex:1;
+padding:15px;
+overflow-y:auto;
+display:flex;
+flex-direction:column;
+gap:14px;
+}
+
+.message{
+max-width:88%;
+padding:14px 18px;
+border-radius:20px;
+line-height:1.8;
+animation:fadeUp .3s ease;
+}
+
+@keyframes fadeUp{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+.user-message{
+background:#00b2ff;
+align-self:flex-end;
+border-bottom-left-radius:6px;
+}
+
+.bot-message{
+background:#1e293b;
+align-self:flex-start;
+border-bottom-right-radius:6px;
+border-right:4px solid #7ee8fa;
+}
+
+.bot-message ul{
+padding-right:22px;
+margin-top:10px;
+list-style:'🔹 ';
+}
+
+.bot-footer{
+margin-top:12px;
+padding-top:10px;
+border-top:1px dashed rgba(255,255,255,.2);
+font-size:.9rem;
+color:#c7e7ff;
+}
+
+#options{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-top:12px;
+}
+
+.option-btn{
+background:linear-gradient(135deg,#00b2ff,#38bdf8);
+border:none;
+color:#fff;
+padding:8px 16px;
+border-radius:22px;
+cursor:pointer;
+font-size:.95rem;
+transition:.3s;
+}
+.option-btn:hover{
+transform:scale(1.05);
+opacity:.9;
+}
+
+#input-area{
+display:flex;
+padding:14px;
+border-top:1px solid #00b2ff;
+background:#0f172a;
+}
+
+#chat-input{
+flex:1;
+background:#020617;
+border:1px solid #1e293b;
+color:#fff;
+padding:12px;
+border-radius:10px;
+}
+
+#send{
+background:#00b2ff;
+border:none;
+color:#fff;
+padding:12px 18px;
+margin-right:10px;
+border-radius:10px;
+cursor:pointer;
+font-weight:700;
+}
+</style>
+</head>
+
+<body>
+
+<div id="chat-interface">
+  <div id="chat-header">
+    🤖 مساعد THE GIANT
+    <button id="back-btn" onclick="location.href='index.html'">⬅ الرجوع</button>
+  </div>
+
+  <div id="chat-messages"></div>
+
+  <div id="input-area">
+    <button id="send">إرسال</button>
+    <input id="chat-input" placeholder="اكتب سؤالك بالتفصيل...">
+  </div>
+</div>
+
+<script>
+const chatMessages=document.getElementById("chat-messages");
+const chatInput=document.getElementById("chat-input");
+const sendBtn=document.getElementById("send");
+
+const contact="01221015966";
+
+const footerText=`
+<div class="bot-footer">
+لو موصلتش للي محتاجه، كلم
+<b>${contact}</b>
+واتساب أو مكالمة، وسيتم حل مشكلتك بإذن الله في أقرب وقت 🤍
+</div>
+`;
+
+const options=[
+{text:"طريقة تسجيل الدخول",key:"login"},
+{text:"إنشاء حساب جديد",key:"signup"},
+{text:"نسيت كلمة السر",key:"reset"},
+{text:"مميزات المنصة",key:"features"},
+{text:"الدعم الفني",key:"support"}
+];
+
+function addMessage(text,type,showOptions=false){
+const div=document.createElement("div");
+div.className=`message ${type}-message`;
+div.innerHTML=text;
+
+if(type==="bot"){
+div.innerHTML+=footerText;
+}
+
+if(showOptions){
+const op=document.createElement("div");
+op.id="options";
+options.forEach(o=>{
+const b=document.createElement("button");
+b.className="option-btn";
+b.innerText=o.text;
+b.onclick=()=>handle(o.key);
+op.appendChild(b);
+});
+div.appendChild(op);
+}
+
+chatMessages.appendChild(div);
+chatMessages.scrollTop=chatMessages.scrollHeight;
+}
+
+function handle(key){
+addMessage(options.find(o=>o.key===key).text,"user");
+addMessage(getResponse(key),"bot",true);
+}
+
+function understandText(text){
+text=text.toLowerCase();
+
+if(text.includes("دخل")||text.includes("تسجيل")) return "login";
+if(text.includes("اعمل")||text.includes("انشاء")) return "signup";
+if(text.includes("نسيت")||text.includes("باسورد")) return "reset";
+if(text.includes("مميزات")||text.includes("بتقدم")) return "features";
+if(text.includes("مشكلة")||text.includes("دعم")) return "support";
+
+return "smart";
+}
+
+function getResponse(key){
+switch(key){
+
+case "welcome":
+return `
+<b>أهلاً بيك في منصة THE GIANT</b><br><br>
+المساعد ده معمول علشان:
+<ul>
+<li>يشرحلك كل خطوة بوضوح</li>
+<li>يحل أي مشكلة تقابلك</li>
+<li>يخليك تستخدم المنصة من غير لخبطة</li>
+</ul>
+اختار سؤالك أو اكتب اللي محتاجه 👇
+`;
+
+case "login":
+return `
+<b>🔐 تسجيل الدخول خطوة بخطوة</b>
+<ul>
+<li>ادخل الصفحة الرئيسية</li>
+<li>اضغط ☰ الثلاث شرط</li>
+<li>اختار تسجيل الدخول</li>
+<li>اكتب الإيميل وكلمة المرور</li>
+<li>اضغط دخول</li>
+</ul>
+`;
+
+case "signup":
+return `
+<b>🆕 إنشاء حساب جديد</b>
+<ul>
+<li>الصفحة الرئيسية → ☰</li>
+<li>إنشاء حساب</li>
+<li>املأ البيانات</li>
+<li>اضغط إنشاء</li>
+</ul>
+`;
+
+case "reset":
+return `
+<b>❓ نسيت كلمة السر</b>
+<ul>
+<li>تسجيل الدخول</li>
+<li>نسيت كلمة السر؟</li>
+<li>اكتب الإيميل</li>
+<li>اتبع الرسالة</li>
+</ul>
+`;
+
+case "features":
+return `
+<b>⭐ مميزات المنصة</b>
+<ul>
+<li>شرح فيديو مبسط</li>
+<li>اختبارات</li>
+<li>متابعة مستوى</li>
+<li>دعم حقيقي</li>
+</ul>
+`;
+
+case "support":
+return `
+<b>📞 الدعم الفني</b>
+<ul>
+<li>مساعدة فورية</li>
+<li>حل مشاكل الحساب</li>
+<li>تواصل مباشر</li>
+</ul>
+`;
+
+case "smart":
+return `
+سؤالك وصل ✔️  
+لكن محتاج توضيح أكتر علشان أساعدك بدقة  
+اكتب تفاصيل أكتر أو استخدم الأزرار 👇
+`;
+}
+}
+
+sendBtn.onclick=()=>{
+if(!chatInput.value.trim())return;
+
+const text=chatInput.value;
+addMessage(text,"user");
+addMessage(getResponse(understandText(text)),"bot",true);
+chatInput.value="";
+};
+
+addMessage(getResponse("welcome"),"bot",true);
+</script>
+
+</body>
+</html>
