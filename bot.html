@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE GIANT AI - إصدار الاستضافة المستقر</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #0b0f19, #0f172a); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #chat-interface { width: 95%; max-width: 600px; height: 92vh; background: #111827; border-radius: 22px; border: 2px solid #7c3aed; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,.6); position: relative; }
+        #chat-header { background: linear-gradient(90deg, #7c3aed, #5b21b6); padding: 15px; text-align: center; font-size: 1.2rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .header-btns { display: flex; gap: 8px; }
+        #back-btn, #clear-btn { background: rgba(255, 255, 255, .15); border: none; color: #fff; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: .8rem; transition: .3s; }
+        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+        .message { max-width: 88%; padding: 12px 16px; border-radius: 18px; line-height: 1.6; animation: fadeUp .3s ease; word-wrap: break-word; position: relative; font-size: 0.95rem; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .user-message { background: #7c3aed; align-self: flex-end; border-bottom-left-radius: 4px; color: white; }
+        .bot-message { background: #1e293b; align-self: flex-start; border-bottom-right-radius: 4px; border-right: 4px solid #a78bfa; }
+        .copy-btn { position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.1); border: none; color: #a78bfa; font-size: 0.7rem; cursor: pointer; padding: 2px 5px; border-radius: 5px; opacity: 0.6; }
+        .copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.2); }
+        .support-footer { background: #0f172a; color: #a78bfa; padding: 8px; text-align: center; font-size: 0.75rem; border-top: 1px solid #1e293b; }
+        .typing-indicator { font-size: 0.8rem; color: #a78bfa; align-self: flex-start; padding: 10px; font-style: italic; display: none; }
+        #input-area { display: flex; padding: 12px; border-top: 1px solid #1e293b; background: #0f172a; gap: 8px; }
+        #chat-input { flex: 1; background: #020617; border: 1px solid #1e293b; color: #fff; padding: 10px; border-radius: 10px; outline: none; }
+        #send, #voice-btn { background: #7c3aed; border: none; color: #fff; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.3s; }
+        #voice-btn.active { background: #ff4b2b; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="chat-interface">
+    <div id="chat-header">
+        <span>🚀 THE GIANT AI</span>
+        <div class="header-btns">
+            <button id="clear-btn">مسح</button>
+            <button id="back-btn" onclick="window.history.back()">رجوع</button>
+        </div>
+    </div>
+    <div id="chat-messages"></div>
+    <div id="typing" class="typing-indicator">جاري التحليل عبر Qwen 2.5...</div>
+    <div class="support-footer">الدعم الفني📞: 01221015966</div>
+    <div id="input-area">
+        <button id="voice-btn">🎤</button>
+        <input id="chat-input" placeholder="اسأل في أي مادة...">
+        <button id="send">إرسال</button>
+    </div>
+</div>
+
+<script type="module">
+    // تم تحسين الاتصال لتجاوز قيود الاستضافات
+    const CONFIG = {
+        API_KEY: "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", 
+        MODEL: "Qwen/Qwen2.5-72B-Instruct"
+    };
+
+    const API_URL = `https://api-inference.huggingface.co/models/${CONFIG.MODEL}`;
+    const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+
+    const SYSTEM_INSTRUCTIONS = "أنت 'The Giant AI' المساعد الذكي لمنصة العملاق التعليمية. خبير لغوي وعلمي. نادِ الطالب بـ 'يا عملاق'.";
+
+    const chatMessages = document.getElementById("chat-messages");
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send");
+    const voiceBtn = document.getElementById("voice-btn");
+    const typingIndicator = document.getElementById("typing");
+
+    let isTyping = false;
+
+    // المايك شغال 100%
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ar-SA';
+        voiceBtn.onclick = () => { try { recognition.start(); voiceBtn.classList.add("active"); } catch (e) { recognition.stop(); } };
+        recognition.onresult = (event) => { chatInput.value = event.results[0][0].transcript; handleSend(); };
+        recognition.onend = () => voiceBtn.classList.remove("active");
+    }
+
+    async function askAI(prompt) {
+        typingIndicator.style.display = "block";
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${CONFIG.API_KEY}`,
+                    "Content-Type": "application/json",
+                    // تم إزالة Headers قد تسبب مشاكل CORS
+                },
+                body: JSON.stringify({
+                    inputs: `<|im_start|>system\n${SYSTEM_INSTRUCTIONS}<|im_end|>\n<|im_start|>user\n${prompt}<|im_end|>\n<|im_start|>assistant`,
+                    parameters: { max_new_tokens: 1024, temperature: 0.1, return_full_text: false }
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "API Error");
+            }
+            
+            const data = await response.json();
+            typingIndicator.style.display = "none";
+            let aiResponse = Array.isArray(data) ? data[0].generated_text : data.generated_text;
+            
+            // تنظيف النص من أي تاجات زائدة
+            aiResponse = aiResponse.replace(/<\|im_end\|>/g, "").replace(/<\|im_start\|>assistant/g, "").trim();
+            
+            await typeWriterEffect(aiResponse);
+        } catch (e) {
+            typingIndicator.style.display = "none";
+            addMessage("يا عملاق، المحرك في حالة تحديث مؤقتة على السيرفر العالمي. جرب مرة أخرى خلال دقيقة.", "bot");
+            console.error(e);
+        }
+    }
+
+    function addMessage(text, type, save = true) {
+        const div = document.createElement("div");
+        div.className = `message ${type}-message`;
+        div.innerHTML = type === 'bot' ? `<button class="copy-btn" onclick="copyText(this)">نسخ</button><div class="markdown-content">${marked.parse(text)}</div>` : text;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (save) saveChat();
+    }
+
+    async function typeWriterEffect(text) {
+        isTyping = true;
+        sendBtn.innerText = "إيقاف";
+        notificationSound.play().catch(() => {});
+        const div = document.createElement("div");
+        div.className = `message bot-message`;
+        div.innerHTML = `<button class="copy-btn" onclick="copyText(this)">نسخ</button><div class="markdown-content"></div>`;
+        chatMessages.appendChild(div);
+        const contentDiv = div.querySelector('.markdown-content');
+        const words = text.split(" ");
+        let currentText = "";
+        for (const word of words) {
+            if (!isTyping) break;
+            currentText += word + " ";
+            contentDiv.innerHTML = marked.parse(currentText);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            await new Promise(r => setTimeout(r, 30));
+        }
+        isTyping = false;
+        sendBtn.innerText = "إرسال";
+        saveChat();
+    }
+
+    function handleSend() {
+        const text = chatInput.value.trim();
+        if (isTyping) { isTyping = false; return; }
+        if (!text) return;
+        addMessage(text, "user");
+        chatInput.value = "";
+        askAI(text);
+    }
+
+    sendBtn.onclick = handleSend;
+    chatInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+    window.copyText = (btn) => { navigator.clipboard.writeText(btn.parentElement.querySelector('.markdown-content').innerText); btn.innerText = "تم!"; setTimeout(() => btn.innerText = "نسخ", 2000); };
+    
+    // حفظ وتحميل المحادثة
+    function saveChat() {
+        const msgs = Array.from(document.querySelectorAll('.message')).map(m => ({
+            text: m.querySelector('.markdown-content')?.innerText || m.innerText,
+            type: m.classList.contains('user-message') ? 'user' : 'bot'
+        }));
+        localStorage.setItem('giant_chat_history', JSON.stringify(msgs));
+    }
+
+    function loadChat() {
+        const history = JSON.parse(localStorage.getItem('giant_chat_history'));
+        if (history) history.forEach(m => addMessage(m.text, m.type, false));
+        else addMessage("أهلاً بك يا عملاق. كيف يمكنني مساعدتك اليوم؟", "bot", false);
+    }
+
+    document.getElementById("clear-btn").onclick = () => { localStorage.removeItem('giant_chat_history'); location.reload(); };
+    loadChat();
+</script>
+</body>
+</html>
