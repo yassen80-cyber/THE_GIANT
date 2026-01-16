@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE GIANT AI - محرك Qwen الجبار</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #0b0f19, #0f172a); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #chat-interface { width: 95%; max-width: 600px; height: 92vh; background: #111827; border-radius: 22px; border: 2px solid #7c3aed; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,.6); position: relative; }
+        #chat-header { background: linear-gradient(90deg, #7c3aed, #5b21b6); padding: 15px; text-align: center; font-size: 1.2rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .header-btns { display: flex; gap: 8px; }
+        #back-btn, #clear-btn { background: rgba(255, 255, 255, .15); border: none; color: #fff; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: .8rem; transition: .3s; }
+        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+        .message { max-width: 88%; padding: 12px 16px; border-radius: 18px; line-height: 1.6; animation: fadeUp .3s ease; word-wrap: break-word; position: relative; font-size: 0.95rem; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .user-message { background: #7c3aed; align-self: flex-end; border-bottom-left-radius: 4px; color: white; }
+        .bot-message { background: #1e293b; align-self: flex-start; border-bottom-right-radius: 4px; border-right: 4px solid #a78bfa; }
+        .copy-btn { position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.1); border: none; color: #a78bfa; font-size: 0.7rem; cursor: pointer; padding: 2px 5px; border-radius: 5px; opacity: 0.6; }
+        .copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.2); }
+        .support-footer { background: #0f172a; color: #a78bfa; padding: 8px; text-align: center; font-size: 0.75rem; border-top: 1px solid #1e293b; }
+        .typing-indicator { font-size: 0.8rem; color: #a78bfa; align-self: flex-start; padding: 10px; font-style: italic; display: none; }
+        #input-area { display: flex; padding: 12px; border-top: 1px solid #1e293b; background: #0f172a; gap: 8px; }
+        #chat-input { flex: 1; background: #020617; border: 1px solid #1e293b; color: #fff; padding: 10px; border-radius: 10px; outline: none; }
+        #send, #voice-btn { background: #7c3aed; border: none; color: #fff; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.3s; }
+        #voice-btn.active { background: #ff4b2b; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="chat-interface">
+    <div id="chat-header">
+        <span>🚀 THE GIANT AI</span>
+        <div class="header-btns">
+            <button id="clear-btn">مسح</button>
+            <button id="back-btn" onclick="window.history.back()">رجوع</button>
+        </div>
+    </div>
+    <div id="chat-messages"></div>
+    <div id="typing" class="typing-indicator">جاري التحليل العميق عبر محرك Qwen 2.5...</div>
+    <div class="support-footer">الدعم الفني📞: 01221015966</div>
+    <div id="input-area">
+        <button id="voice-btn">🎤</button>
+        <input id="chat-input" placeholder="اسأل في أي مادة أو عن المنصة...">
+        <button id="send">إرسال</button>
+    </div>
+</div>
+
+<script type="module">
+    const CONFIG = {
+        API_KEY: "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",
+        MODEL: "Qwen/Qwen2.5-72B-Instruct"
+    };
+
+    const API_URL = `https://api-inference.huggingface.co/models/${CONFIG.MODEL}`;
+    const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+
+    const SYSTEM_INSTRUCTIONS = `
+    أنت الآن "The Giant AI" المساعد الذكي الخارق لمنصة العملاق التعليمية.
+    أنت تستخدم محرك Qwen 2.5 72B لضمان دقة لغوية وعلمية فائقة.
+    المطور: ياسين ياسر.
+    أولاً: النحو العربي (دقة مطلقة): أنت خبير لغوي، التزم بقواعد النحو الفصحى.
+    ثانياً: خبير المواد: أجب بدقة في الفيزياء، الكيمياء، الرياضيات، والتاريخ.
+    ثالثاً: دليل المنصة: الكورسات: dashboard.html | المجاني: freevid.html | الملف الشخصي: profile.html
+    رابعاً: الأسلوب: نادِ الطالب بـ "يا عملاق".
+    `;
+
+    const chatMessages = document.getElementById("chat-messages");
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send");
+    const voiceBtn = document.getElementById("voice-btn");
+    const typingIndicator = document.getElementById("typing");
+
+    let isTyping = false;
+
+    // إعداد التعرف على الصوت
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ar-SA';
+        recognition.interimResults = false;
+
+        voiceBtn.onclick = () => {
+            try {
+                recognition.start();
+                voiceBtn.classList.add("active");
+                voiceBtn.innerText = "🛑";
+            } catch (e) { recognition.stop(); }
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            chatInput.value = transcript;
+            voiceBtn.classList.remove("active");
+            voiceBtn.innerText = "🎤";
+            handleSend(); // إرسال تلقائي بعد التعرف على الصوت
+        };
+
+        recognition.onspeechend = () => {
+            recognition.stop();
+            voiceBtn.classList.remove("active");
+            voiceBtn.innerText = "🎤";
+        };
+
+        recognition.onerror = () => {
+            voiceBtn.classList.remove("active");
+            voiceBtn.innerText = "🎤";
+        };
+    } else {
+        voiceBtn.onclick = () => alert("المتصفح لا يدعم المايك يا عملاق.");
+    }
+
+    function addMessage(text, type, save = true) {
+        const div = document.createElement("div");
+        div.className = `message ${type}-message`;
+        if (type === 'bot') {
+            div.innerHTML = `<button class="copy-btn" onclick="copyText(this)">نسخ</button><div class="markdown-content">${marked.parse(text)}</div>`;
+        } else {
+            div.innerText = text;
+        }
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (save) saveChat();
+    }
+
+    async function typeWriterEffect(text) {
+        isTyping = true;
+        sendBtn.innerText = "إيقاف";
+        notificationSound.play().catch(e => {});
+        const div = document.createElement("div");
+        div.className = `message bot-message`;
+        div.innerHTML = `<button class="copy-btn" onclick="copyText(this)">نسخ</button><div class="markdown-content"></div>`;
+        chatMessages.appendChild(div);
+        const contentDiv = div.querySelector('.markdown-content');
+        
+        const words = text.split(" ");
+        let currentText = "";
+        for (let i = 0; i < words.length; i++) {
+            if (!isTyping) break;
+            currentText += words[i] + " ";
+            contentDiv.innerHTML = marked.parse(currentText);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            await new Promise(r => setTimeout(r, 25));
+        }
+        isTyping = false;
+        sendBtn.innerText = "إرسال";
+        saveChat();
+    }
+
+    async function askAI(prompt) {
+        typingIndicator.style.display = "block";
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${CONFIG.API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    inputs: `<|im_start|>system\n${SYSTEM_INSTRUCTIONS}<|im_end|>\n<|im_start|>user\n${prompt}<|im_end|>\n<|im_start|>assistant`,
+                    parameters: { max_new_tokens: 1024, temperature: 0.1, return_full_text: false }
+                })
+            });
+            
+            const data = await response.json();
+            typingIndicator.style.display = "none";
+            let aiResponse = Array.isArray(data) ? data[0].generated_text.trim() : "يا عملاق، المحرك مشغول حالياً. حاول ثانية.";
+            await typeWriterEffect(aiResponse);
+        } catch (e) {
+            typingIndicator.style.display = "none";
+            addMessage("يا عملاق، هناك مشكلة في الاتصال. تأكد من الإنترنت.", "bot");
+        }
+    }
+
+    function handleSend() {
+        const text = chatInput.value.trim();
+        if (isTyping) { isTyping = false; return; }
+        if (!text) return;
+        addMessage(text, "user");
+        chatInput.value = "";
+        askAI(text);
+    }
+
+    sendBtn.onclick = handleSend;
+    chatInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+    
+    function saveChat() {
+        const msgs = [];
+        document.querySelectorAll('.message').forEach(m => {
+            const content = m.querySelector('.markdown-content') ? m.querySelector('.markdown-content').innerText : m.innerText;
+            msgs.push({ text: content.replace('نسخ', '').trim(), type: m.classList.contains('user-message') ? 'user' : 'bot' });
+        });
+        localStorage.setItem('giant_qwen_history', JSON.stringify(msgs));
+    }
+
+    function loadChat() {
+        const history = JSON.parse(localStorage.getItem('giant_qwen_history'));
+        if (history) { history.forEach(m => addMessage(m.text, m.type, false)); }
+        else { addMessage("أهلاً بك يا عملاق. كيف يمكنني مساعدتك اليوم؟", "bot", false); }
+    }
+
+    document.getElementById("clear-btn").onclick = () => {
+        localStorage.removeItem('giant_qwen_history');
+        location.reload();
+    };
+
+    window.copyText = (btn) => {
+        const text = btn.parentElement.querySelector('.markdown-content').innerText;
+        navigator.clipboard.writeText(text);
+        btn.innerText = "تم!";
+        setTimeout(() => btn.innerText = "نسخ", 2000);
+    };
+
+    loadChat();
+</script>
+</body>
+</html>
