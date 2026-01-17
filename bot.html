@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE GIANT -   </title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { margin: 0; font-family: 'Cairo', sans-serif; background: linear-gradient(135deg, #0b0f19, #0f172a); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        #chat-interface { width: 95%; max-width: 600px; height: 92vh; background: #111827; border-radius: 22px; border: 2px solid #00b2ff; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,.6); position: relative; }
+        #chat-header { background: linear-gradient(90deg, #00b2ff, #008bcc); padding: 15px; text-align: center; font-size: 1.2rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .header-btns { display: flex; gap: 8px; }
+        #back-btn, #clear-btn { background: rgba(255, 255, 255, .15); border: none; color: #fff; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: .8rem; transition: .3s; }
+        #chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+        .message { max-width: 88%; padding: 12px 16px; border-radius: 18px; line-height: 1.6; animation: fadeUp .3s ease; word-wrap: break-word; position: relative; font-size: 0.95rem; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .user-message { background: #00b2ff; align-self: flex-end; border-bottom-left-radius: 4px; color: white; }
+        .bot-message { background: #1e293b; align-self: flex-start; border-bottom-right-radius: 4px; border-right: 4px solid #7ee8fa; }
+        
+        .bot-message p { margin: 5px 0; }
+        .bot-message ul, .bot-message ol { padding-right: 20px; }
+        
+        .copy-btn { position: absolute; top: 5px; left: 5px; background: rgba(255,255,255,0.1); border: none; color: #7ee8fa; font-size: 0.7rem; cursor: pointer; padding: 2px 5px; border-radius: 5px; opacity: 0.6; }
+        .copy-btn:hover { opacity: 1; background: rgba(255,255,255,0.2); }
+
+        .support-footer { background: #0f172a; color: #7ee8fa; padding: 8px; text-align: center; font-size: 0.75rem; border-top: 1px solid #1e293b; }
+        .typing-indicator { font-size: 0.8rem; color: #7ee8fa; align-self: flex-start; padding: 10px; font-style: italic; display: none; }
+        
+        #input-area { display: flex; padding: 12px; border-top: 1px solid #1e293b; background: #0f172a; gap: 8px; }
+        #chat-input { flex: 1; background: #020617; border: 1px solid #1e293b; color: #fff; padding: 10px; border-radius: 10px; outline: none; }
+        #send, #voice-btn { background: #00b2ff; border: none; color: #fff; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 700; }
+        #voice-btn.active { background: #ef4444; animation: pulse 1.5s infinite; }
+    </style>
+</head>
+<body>
+
+<div id="chat-interface">
+    <div id="chat-header">
+        <span>  </span>
+        <div class="header-btns">
+            <button id="clear-btn"></button>
+            <button id="back-btn" onclick="window.history.back()"></button>
+        </div>
+    </div>
+    <div id="chat-messages"></div>
+    <div id="typing" class="typing-indicator"> ...</div>
+    <div class="support-footer">
+         : 01221015966 
+|           
+    </div>
+    <div id="input-area">
+        <button id="voice-btn"></button>
+        <input id="chat-input" placeholder="  ...">
+        <button id="send"></button>
+    </div>
+</div>
+
+<script type="module">
+    const CONFIG = {
+        API_KEY: "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",
+        MODEL: "llama-3.1-8b-instant"
+    };
+
+    const API_URL = "https://api.groq.com/openai/v1/chat/completions";
+
+    const SYSTEM_INSTRUCTIONS = `
+      " " (The Giant).             : https://thegiant10.com
+
+    1.      ( ):
+    -        .
+    - **    :**       " "   .         (Chain of Thought)      100%.    .
+    -        "".
+    -           .
+
+    2.   :
+    -    thegiant10.com.         .
+
+    3.    (  ):
+    - : https://thegiant10.com/index.html
+    - : https://thegiant10.com/register.html
+    - : https://thegiant10.com/login.html
+    - : https://thegiant10.com/dashboard.html
+    - : https://thegiant10.com/freevid.html
+    -  : https://thegiant10.com/myprofile.html
+    - : https://thegiant10.com/tawasal.html
+    - : https://thegiant10.com/taqeem.html
+    * :              .      .
+
+    4.   :
+    -       " ".
+    -     " ".
+    -      (  )      .
+
+    5.  :
+    -           .
+
+    6.  :
+    - : yassenmansor685@gamil.com | : 01221015966.
+`;
+
+    const chatMessages = document.getElementById("chat-messages");
+    const chatInput = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send");
+    const typingIndicator = document.getElementById("typing");
+
+    let chatHistory = []; 
+    let isTyping = false;
+
+    function addMessage(text, type, save = true) {
+        const div = document.createElement("div");
+        div.className = `message ${type}-message`;
+        if (type === 'bot') {
+            div.innerHTML = `<button class="copy-btn" onclick="copyText(this)"></button><div class="markdown-content">${marked.parse(text)}</div>`;
+        } else {
+            div.innerText = text;
+        }
+        chatMessages.appendChild(div);
+        autoScroll();
+        if (save) saveChat();
+    }
+
+    async function typeWriterEffect(text) {
+        isTyping = true;
+        sendBtn.innerText = "";
+        const div = document.createElement("div");
+        div.className = `message bot-message`;
+        div.innerHTML = `<button class="copy-btn" onclick="copyText(this)"></button><div class="markdown-content"></div>`;
+        chatMessages.appendChild(div);
+        const contentDiv = div.querySelector('.markdown-content');
+        const words = text.split(" ");
+        let currentText = "";
+        for (let i = 0; i < words.length; i++) {
+            if (!isTyping) break;
+            currentText += words[i] + " ";
+            contentDiv.innerHTML = marked.parse(currentText);
+            autoScroll();
+            await new Promise(resolve => setTimeout(resolve, 60));
+        }
+        isTyping = false;
+        sendBtn.innerText = "";
+        saveChat();
+    }
+
+    function autoScroll() { chatMessages.scrollTop = chatMessages.scrollHeight; }
+
+    function saveChat() {
+        const msgs = [];
+        document.querySelectorAll('.message').forEach(m => {
+            const content = m.querySelector('.markdown-content') ? m.querySelector('.markdown-content').innerText : m.innerText;
+            msgs.push({ text: content.replace('', '').trim(), type: m.classList.contains('user-message') ? 'user' : 'bot' });
+        });
+        localStorage.setItem('giant_chat_history', JSON.stringify(msgs));
+    }
+
+    function loadChat() {
+        const history = JSON.parse(localStorage.getItem('giant_chat_history'));
+        if (history) {
+            history.forEach(m => {
+                addMessage(m.text, m.type, false);
+                chatHistory.push({ role: m.type === 'user' ? 'user' : 'assistant', content: m.text });
+            });
+            if (chatHistory.length > 14) chatHistory = chatHistory.slice(-14);
+        } else {
+            addMessage("      THE GIANT.       ", "bot", false);
+        }
+    }
+
+    window.copyText = (btn) => {
+        const text = btn.parentElement.querySelector('.markdown-content').innerText;
+        navigator.clipboard.writeText(text);
+        btn.innerText = "!";
+        setTimeout(() => btn.innerText = "", 2000);
+    };
+
+    async function askAI(prompt) {
+        typingIndicator.style.display = "block";
+        chatHistory.push({ role: "user", content: prompt });
+        if (chatHistory.length > 20) chatHistory.shift();
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${CONFIG.API_KEY}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    model: CONFIG.MODEL,
+                    messages: [{ role: "system", content: SYSTEM_INSTRUCTIONS }, ...chatHistory],
+                    temperature: 0.1, //   temperature    
+                    top_p: 0.9
+                })
+            });
+            const data = await response.json();
+            const aiResponse = data.choices[0].message.content;
+            chatHistory.push({ role: "assistant", content: aiResponse });
+            typingIndicator.style.display = "none";
+            await typeWriterEffect(aiResponse);
+        } catch (error) {
+            typingIndicator.style.display = "none";
+            addMessage("        .", "bot");
+        }
+    }
+
+    function handleSend() {
+        const text = chatInput.value.trim();
+        if (isTyping) { isTyping = false; return; }
+        if (!text) return;
+        addMessage(text, "user");
+        chatInput.value = "";
+        askAI(text);
+    }
+
+    sendBtn.onclick = handleSend;
+    chatInput.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+    
+    document.getElementById("clear-btn").onclick = () => {
+        if (confirm("   ")) {
+            localStorage.removeItem('giant_chat_history');
+            chatHistory = [];
+            chatMessages.innerHTML = "";
+            addMessage("    .", "bot", false);
+        }
+    };
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ar-EG';
+        const vBtn = document.getElementById("voice-btn");
+        vBtn.onclick = () => { recognition.start(); vBtn.classList.add('active'); };
+        recognition.onresult = (e) => {
+            chatInput.value = e.results[0][0].transcript;
+            vBtn.classList.remove('active');
+            handleSend();
+        };
+        recognition.onend = () => vBtn.classList.remove('active');
+    }
+
+    loadChat();
+</script>
+</body>
+</html>
