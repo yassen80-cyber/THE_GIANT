@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الملف الشخصي | THE GIANT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card: #161e2d;
+            --accent: #00b2ff;
+            --text: #ffffff;
+            --muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #ffcc00;
+            --gradient: linear-gradient(135deg, #00b2ff 0%, #006aff 100%);
+        }
+
+        body { margin: 0; font-family: 'Cairo', sans-serif; background-color: var(--bg); color: var(--text); padding: 10px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; margin: 0 auto; }
+
+        .back-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .btn-back, .btn-logout { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #fff; padding: 8px 15px; border-radius: 12px; text-decoration: none; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+        .btn-logout:hover { background: var(--danger); border-color: transparent; }
+
+        .profile-hero { background: var(--card); border-radius: 24px; padding: 25px 20px; text-align: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .rank-badge { position: absolute; top: 15px; right: 15px; background: var(--gradient); padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 900; }
+        .avatar-wrapper { width: 90px; height: 90px; margin: 0 auto 12px; padding: 3px; background: var(--gradient); border-radius: 50%; }
+        .avatar { width: 100%; height: 100%; background: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 35px; color: var(--accent); font-weight: 900; }
+
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: var(--card); padding: 15px 5px; border-radius: 18px; text-align: center; border: 1px solid rgba(255,255,255,0.03); }
+        .stat-box h3 { font-size: 1.2rem; margin: 0; color: var(--accent); font-weight: 800; }
+        .stat-box p { font-size: 0.65rem; color: var(--muted); margin: 4px 0 0; }
+
+        .tabs-header { display: flex; background: rgba(30, 41, 59, 0.5); padding: 5px; border-radius: 14px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--muted); font-family: 'Cairo'; font-weight: bold; cursor: pointer; border-radius: 10px; transition: 0.3s; }
+        .tab-btn.active { background: var(--text); color: var(--bg); }
+
+        .card-item { background: var(--card); padding: 16px; border-radius: 18px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.02); display: flex; align-items: center; justify-content: space-between; }
+        .progress-container { width: 100%; background: #2d3748; height: 8px; border-radius: 10px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); border-radius: 10px; transition: 1s ease-in-out; }
+        .score-badge { padding: 6px 12px; border-radius: 12px; font-weight: 900; font-size: 0.85rem; color: #fff; min-width: 45px; text-align: center; }
+
+        .pending-task { background: rgba(255, 255, 255, 0.03); border-radius: 12px; padding: 10px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.05); }
+        .btn-start { background: var(--gradient); color: white; border: none; padding: 5px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items:center; justify-content:center; z-index: 1000; padding: 20px; backdrop-filter: blur(5px); }
+        .modal-body { background: var(--card); width: 100%; max-width: 350px; padding: 25px; border-radius: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #0b0f19; border: 1px solid #334155; border-radius: 12px; color: white; font-family: 'Cairo'; outline: none; box-sizing: border-box; }
+        
+        #loader { position: fixed; inset: 0; background: var(--bg); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .spinner { width: 35px; height: 35px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="loader"><div class="spinner"></div></div>
+
+<div class="container">
+    <div class="back-nav">
+        <a href="index.html" class="btn-back">🔙 الرئيسية</a>
+        <button id="logoutBtn" class="btn-logout">🚪 خروج</button>
+    </div>
+
+    <div class="profile-hero">
+        <div id="userRank" class="rank-badge">...</div>
+        <div class="avatar-wrapper">
+            <div class="avatar" id="userInitial">?</div>
+        </div>
+        <h2 id="userName" style="margin:5px 0; font-size: 1.4rem;">...</h2>
+        <p id="userEmail" style="color:var(--muted); font-size:0.85rem; margin-bottom: 15px;">...</p>
+        <button class="btn-back" id="openModalBtn" style="margin: 0 auto; font-size:0.75rem; background: rgba(0, 178, 255, 0.1); border-color: var(--accent);">⚙️ إعدادات الحساب</button>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-box"><h3 id="countCourses">0</h3><p>الكورسات</p></div>
+        <div class="stat-box"><h3 id="countHomeworks">0</h3><p>المهام المنجزة</p></div>
+        <div class="stat-box"><h3 id="avgScore">0%</h3><p>المستوى العام</p></div>
+    </div>
+
+    <div class="tabs-header">
+        <button class="tab-btn active" id="tabCourses">📘 كورساتي</button>
+        <button class="tab-btn" id="tabResults">🏆 سجل الدرجات</button>
+    </div>
+
+    <div id="coursesSection"><div id="coursesList"></div></div>
+    <div id="resultsSection" style="display: none;"><div id="resultList"></div></div>
+</div>
+
+<div class="modal" id="editModal">
+    <div class="modal-body">
+        <h3 style="margin-top:0">تحديث البيانات</h3>
+        <input type="text" id="editName" placeholder="الاسم الكامل">
+        <input type="tel" id="editPhone" placeholder="رقم الهاتف">
+        <button id="saveBtn" style="width: 100%; background: var(--gradient); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; font-family: 'Cairo';">حفظ التغييرات</button>
+        <button onclick="document.getElementById('editModal').style.display='none'" style="background:none; color:var(--muted); border:none; margin-top:10px; cursor:pointer; font-family: 'Cairo';">إلغاء</button>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { getDatabase, ref, get, update, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+    authDomain: "ylearn-fe1fa.firebaseapp.com",
+    databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+    projectId: "ylearn-fe1fa",
+    storageBucket: "ylearn-fe1fa.firebasestorage.app",
+    messagingSenderId: "1092852055944",
+    appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        const localSid = localStorage.getItem('user_session_id');
+        onValue(ref(db, `users/${user.uid}/currentSession`), (s) => {
+            if (s.exists() && s.val() !== localSid) {
+                alert("تم تسجيل الدخول من جهاز آخر!");
+                signOut(auth).then(() => window.location.href = 'login.html');
+            }
+        });
+        loadUserData(user.uid);
+    } else {
+        window.location.href = "login.html";
+    }
+});
+
+async function loadUserData(uid) {
+    try {
+        const [pSnap, hwSnap, exSnap, rSnap, uSnap, allCoursesSnap] = await Promise.all([
+            get(ref(db, `students/${uid}/purchased`)),
+            get(ref(db, `homeworkResult/${uid}`)),
+            get(ref(db, `results/${uid}`)),
+            get(ref(db, `result/${uid}`)),
+            get(ref(db, `users/${uid}`)),
+            get(ref(db, `courses`))
+        ]);
+
+        // 1. عرض بيانات المستخدم
+        if (uSnap.exists()) {
+            const u = uSnap.val();
+            document.getElementById('userName').textContent = u.fullName || "طالب العملاق";
+            document.getElementById('userEmail').textContent = auth.currentUser.email;
+            document.getElementById('userInitial').textContent = (u.fullName || "S").charAt(0).toUpperCase();
+            document.getElementById('editName').value = u.fullName || "";
+            document.getElementById('editPhone').value = u.studentNumber || "";
+        }
+
+        // 2. جمع كل المعرفات والعناوين المحلولة (للامتحانات والواجبات)
+        const solvedMap = new Set();
+        const solvedTitles = new Set();
+
+        const processResults = (snap) => {
+            if (snap.exists()) {
+                Object.entries(snap.val()).forEach(([id, data]) => {
+                    solvedMap.add(id);
+                    if (data.examTitle) solvedTitles.add(data.examTitle);
+                });
+            }
+        };
+
+        processResults(hwSnap);
+        processResults(exSnap);
+        processResults(rSnap);
+
+        // 3. عرض الكورسات والمهام المتبقية
+        let coursesHTML = "";
+        const purchasedIds = pSnap.exists() ? Object.keys(pSnap.val()) : [];
+        const allCourses = allCoursesSnap.exists() ? allCoursesSnap.val() : {};
+        let validCoursesCount = 0;
+
+        for (const cId in allCourses) {
+            const course = allCourses[cId];
+            const isPurchased = purchasedIds.includes(cId);
+            const isFree = course.price === 0 || course.price === "0" || course.type === "free";
+
+            if (isPurchased || isFree) {
+                validCoursesCount++;
+                let totalTasks = 0;
+                let completedTasks = 0;
+                let pendingTasksHTML = "";
+
+                if (course.content) {
+                    Object.entries(course.content).forEach(([itemId, item]) => {
+                        // نحسب فقط الامتحانات والواجبات في التقدم
+                        if (item.type === "امتحان" || item.type === "واجب") {
+                            totalTasks++;
+                            const isSolved = solvedMap.has(itemId) || solvedTitles.has(item.title);
+                            
+                            if (isSolved) {
+                                completedTasks++;
+                            } else {
+                                // التعديل هنا: توجيه الواجب لـ wageb.html والامتحان لـ exam.html
+                                let targetPage = "";
+                                let paramName = "";
+
+                                if (item.type === "واجب") {
+                                    targetPage = "wageb.html";
+                                    paramName = "examId";
+                                } else { // "امتحان"
+                                    targetPage = "exam.html";
+                                    paramName = "examId";
+                                }
+                                
+                                pendingTasksHTML += `
+                                    <div class="pending-task">
+                                        <div style="font-size:0.75rem; flex: 1;">
+                                            <span style="color:var(--accent); font-weight:bold;">[${item.type}]</span> ${item.title}
+                                        </div>
+                                        <a href="${targetPage}?${paramName}=${encodeURIComponent(itemId)}&courseId=${encodeURIComponent(cId)}" class="btn-start">ابدأ</a>
+                                    </div>`;
+                            }
+                        }
+                    });
+                }
+
+                const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                const color = progress === 100 ? "var(--success)" : "var(--accent)";
+
+                coursesHTML += `
+                    <div class="card-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                        <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                            <span style="font-weight:700; font-size:0.95rem;">📘 ${course.name}</span>
+                            <span style="color:${color}; font-size:0.75rem; font-weight:800;">${progress === 100 ? 'مكتمل ✅' : progress + '%'}</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-fill" style="width: ${progress}%; background: ${color}"></div>
+                        </div>
+                        <div style="width:100%;">${pendingTasksHTML}</div>
+                        ${totalTasks === 0 ? '<div style="font-size:0.65rem; color:var(--muted)">لا يوجد مهام حالياً</div>' : ''}
+                    </div>`;
+            }
+        }
+
+        document.getElementById('countCourses').textContent = validCoursesCount;
+        document.getElementById('coursesList').innerHTML = coursesHTML || '<div style="text-align:center; padding:20px; color:var(--muted)">لم تشترك في أي كورس بعد</div>';
+
+        // 4. عرض سجل الدرجات
+        let totalScore = 0, totalCount = 0;
+        let resHTML = "";
+
+        const allExams = [
+            ...(exSnap.exists() ? Object.values(exSnap.val()) : []),
+            ...(rSnap.exists() ? Object.values(rSnap.val()) : [])
+        ];
+
+        if (allExams.length > 0) {
+            resHTML += `<h4 style="color:var(--accent); margin:10px 5px; font-size:0.85rem">🏆 الامتحانات</h4>`;
+            allExams.forEach(ex => {
+                const p = parseFloat(ex.percentage || (ex.score / ex.total * 100) || 0);
+                totalScore += p; totalCount++;
+                resHTML += renderResultCard(ex.examTitle, p.toFixed(0), ex.finishedAt || ex.createdAt, "var(--accent)");
+            });
+        }
+
+        const allHw = hwSnap.exists() ? Object.values(hwSnap.val()) : [];
+        if (allHw.length > 0) {
+            resHTML += `<h4 style="color:var(--warning); margin:15px 5px 5px; font-size:0.85rem">📝 الواجبات</h4>`;
+            allHw.forEach(hw => {
+                const p = parseFloat(hw.percentage || (hw.score / hw.total * 100) || 0);
+                totalScore += p; totalCount++;
+                resHTML += renderResultCard(hw.examTitle, p.toFixed(0), hw.finishedAt, "var(--warning)");
+            });
+        }
+
+        document.getElementById('resultList').innerHTML = resHTML || '<div style="text-align:center; padding:20px; color:var(--muted)">لا يوجد سجل نتائج بعد</div>';
+
+        // 5. تحديث الإحصائيات والرتبة
+        const avg = totalCount > 0 ? Math.round(totalScore / totalCount) : 0;
+        document.getElementById('avgScore').textContent = avg + "%";
+        document.getElementById('countHomeworks').textContent = totalCount;
+
+        const rank = document.getElementById('userRank');
+        if (avg >= 90) { rank.textContent = "🥇 عملاق ذهبي"; rank.style.background = "linear-gradient(135deg, #ffd700, #ff8c00)"; }
+        else if (avg >= 70) { rank.textContent = "⚔️ محارب"; rank.style.background = "var(--gradient)"; }
+        else { rank.textContent = "🌱 ناشئ"; rank.style.background = "#4a5568"; }
+
+    } catch (e) {
+        console.error("Error:", e);
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+    }
+}
+
+function renderResultCard(title, score, date, color) {
+    let d = '---';
+    if(date) {
+        d = typeof date === 'string' ? date.split('T')[0] : new Date(date).toLocaleDateString('ar-EG');
+    }
+    return `
+        <div class="card-item" style="border-right: 4px solid ${color}; padding: 12px;">
+            <div style="flex-grow:1">
+                <div style="font-weight:700; font-size:0.8rem; line-height:1.4;">${title}</div>
+                <div style="font-size:0.6rem; color:var(--muted); margin-top:4px">📅 ${d}</div>
+            </div>
+            <div class="score-badge" style="background:${score >= 50 ? 'var(--gradient)' : 'var(--danger)'}; margin-right:10px">
+                ${score}%
+            </div>
+        </div>`;
+}
+
+// الأزرار والتبديلات
+document.getElementById('logoutBtn').onclick = () => { if(confirm("هل تريد تسجيل الخروج؟")) signOut(auth); };
+document.getElementById('openModalBtn').onclick = () => document.getElementById('editModal').style.display = 'flex';
+document.getElementById('saveBtn').onclick = async () => {
+    const name = document.getElementById('editName').value.trim();
+    const phone = document.getElementById('editPhone').value.trim();
+    if(!name || phone.length < 11) { alert("يرجى إدخال بيانات صحيحة"); return; }
+    try {
+        await update(ref(db, `users/${auth.currentUser.uid}`), { fullName: name, studentNumber: phone });
+        location.reload();
+    } catch(e) { alert("حدث خطأ أثناء التحديث"); }
+};
+
+document.getElementById('tabCourses').onclick = function() {
+    this.classList.add('active'); document.getElementById('tabResults').classList.remove('active');
+    document.getElementById('coursesSection').style.display = 'block'; document.getElementById('resultsSection').style.display = 'none';
+};
+document.getElementById('tabResults').onclick = function() {
+    this.classList.add('active'); document.getElementById('tabCourses').classList.remove('active');
+    document.getElementById('resultsSection').style.display = 'block'; document.getElementById('coursesSection').style.display = 'none';
+};
+</script>
+</body>
+</html>

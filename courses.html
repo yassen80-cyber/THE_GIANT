@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>📚 إدارة الكورسات - منصة THE GIANT</title>
+<style>
+  body {
+    margin: 0;
+    font-family: "Cairo", sans-serif;
+    background: #0b0f19;
+    color: #fff;
+    min-height: 100vh;
+  }
+  header {
+    background: #111827;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.4);
+  }
+  header h1 {
+    color: #00b2ff;
+    margin: 0;
+    font-size: 1.3rem;
+  }
+  button {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  button.logout {
+    background: #e63946;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+  }
+  button:hover { opacity: 0.9; }
+  .content {
+    padding: 1rem;
+    max-width: 900px;
+    margin: auto;
+  }
+  h2 { color: #00b2ff; margin-top: 1.5rem; }
+  input, textarea, select {
+    width: 100%;
+    padding: 0.8rem;
+    margin: 0.5rem 0;
+    border: none;
+    border-radius: 8px;
+    background: #1e2636;
+    color: #fff;
+    font-size: 1rem;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .course-card {
+    background: #1e2636;
+    padding: 1rem;
+    border-radius: 10px;
+    margin: 1rem 0;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+  .course-card h3 { margin-top: 0; color: #00b2ff; }
+  .course-card p { margin: 6px 0; color: #ccc; }
+  .delete-btn {
+    background: #e63946;
+    color: #fff;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+  .create-btn {
+    background: #00b2ff;
+    color: #fff;
+    padding: 0.8rem;
+    width: 100%;
+    font-size: 1rem;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+  }
+
+  /* 🎯 تصميم نافذة التنبيه بنفس شكل تقييم المنصة */
+  #customAlert {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #111827;
+    color: #fff;
+    padding: 25px 30px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0,178,255,0.4);
+    text-align: center;
+    z-index: 9999;
+    animation: fadeIn 0.4s ease;
+    width: 85%;
+    max-width: 360px;
+  }
+
+  #customAlert h3 {
+    color: #00b2ff;
+    margin-bottom: 12px;
+  }
+
+  #customAlert button {
+    margin-top: 10px;
+    background: #00b2ff;
+    border: none;
+    color: white;
+    padding: 10px 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.1rem; }
+    .content { padding: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🎓 إدارة الكورسات</h1>
+    <button class="logout">رجوع للوحة الأدمن</button>
+  </header>
+
+  <div class="content">
+    <h2>👨‍🏫 اختر المدرس</h2>
+    <select id="teacherSelect"><option value="">-- اختر مدرس --</option></select>
+
+    <h2>➕ إنشاء كورس جديد</h2>
+    <input type="text" id="courseName" placeholder="اسم الكورس">
+    <textarea id="courseDesc" placeholder="وصف الكورس"></textarea>
+    <input type="number" id="coursePrice" placeholder="سعر الكورس بالجنيه">
+    <button id="createCourseBtn" class="create-btn">إنشاء الكورس</button>
+
+    <h2>📦 كورسات المدرس المحدد</h2>
+    <div id="coursesContainer"></div>
+  </div>
+
+  <!-- 🔹 نافذة الإشعار المخصصة -->
+  <div id="customAlert">
+    <h3>THE GIANT says 💬</h3>
+    <p id="alertMessage"></p>
+    <button onclick="closeAlert()">تمام</button>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+  import { getDatabase, ref, push, set, get, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+    authDomain: "ylearn-fe1fa.firebaseapp.com",
+    databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+    projectId: "ylearn-fe1fa",
+    storageBucket: "ylearn-fe1fa.firebasestorage.app",
+    messagingSenderId: "1092852055944",
+    appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  const teacherSelect = document.getElementById("teacherSelect");
+  const coursesContainer = document.getElementById("coursesContainer");
+  const alertBox = document.getElementById("customAlert");
+  const alertMsg = document.getElementById("alertMessage");
+  let selectedTeacherId = null;
+
+  // 🎯 تنبيه مخصص
+  window.showAlert = function(text) {
+    alertMsg.textContent = text;
+    alertBox.style.display = "block";
+  };
+
+  window.closeAlert = function() {
+    alertBox.style.display = "none";
+  };
+
+  // جلب المدرسين مرة واحدة عند التحميل
+  async function loadTeachers() {
+    try {
+      const snap = await get(ref(db, "teachers"));
+      teacherSelect.innerHTML = '<option value="">-- اختر مدرس --</option>';
+      if (snap.exists()) {
+        Object.entries(snap.val()).forEach(([id, t]) => {
+          const opt = document.createElement("option");
+          opt.value = id;
+          opt.textContent = `${t.name}${t.grade ? ` (${t.grade})` : ""}`;
+          teacherSelect.appendChild(opt);
+        });
+      } else {
+        teacherSelect.innerHTML = '<option value="">❌ لا يوجد مدرسين</option>';
+      }
+    } catch (err) {
+      console.error("Error loading teachers:", err);
+    }
+  }
+
+  teacherSelect.addEventListener("change", () => {
+    selectedTeacherId = teacherSelect.value;
+    loadCourses();
+  });
+
+  // جلب الكورسات بنظام get المباشر
+  async function loadCourses() {
+    if (!selectedTeacherId) {
+      coursesContainer.innerHTML = "";
+      return;
+    }
+    
+    coursesContainer.innerHTML = "<p style='text-align:center;'>جاري تحميل الكورسات...</p>";
+    
+    try {
+      // جلب معرفات الكورسات المرتبطة بالمدرس
+      const teacherCoursesSnap = await get(ref(db, `teachers/${selectedTeacherId}/courses`));
+      
+      if (!teacherCoursesSnap.exists()) {
+        coursesContainer.innerHTML = "<p style='text-align:center;'>❌ لا توجد كورسات لهذا المدرس.</p>";
+        return;
+      }
+
+      const courseIds = Object.keys(teacherCoursesSnap.val());
+      coursesContainer.innerHTML = "";
+
+      // جلب تفاصيل كل كورس (استخدام Promise.all لتسريع العملية وتقليل الانتظار)
+      const coursePromises = courseIds.map(id => get(ref(db, `courses/${id}`)));
+      const courseSnaps = await Promise.all(coursePromises);
+
+      courseSnaps.forEach((cSnap) => {
+        if (cSnap.exists()) {
+          const c = cSnap.val();
+          const courseId = cSnap.key;
+          const div = document.createElement("div");
+          div.className = "course-card";
+          div.innerHTML = `
+            <h3>${c.name}</h3>
+            <p>${c.description}</p>
+            <p>💰 السعر: ${c.price} جنيه</p>
+            <button class="delete-btn" onclick="deleteCourse('${courseId}')">🗑️ حذف الكورس</button>
+          `;
+          coursesContainer.appendChild(div);
+        }
+      });
+    } catch (err) {
+      showAlert("حدث خطأ أثناء تحميل الكورسات");
+    }
+  }
+
+  // حذف كورس
+  window.deleteCourse = async function(courseId) {
+    if (!confirm("هل أنت متأكد من حذف هذا الكورس؟ سيؤدي ذلك لحذفه من عند المدرس أيضاً.")) return;
+    
+    try {
+      await Promise.all([
+        remove(ref(db, `courses/${courseId}`)),
+        remove(ref(db, `teachers/${selectedTeacherId}/courses/${courseId}`))
+      ]);
+      showAlert("🗑️ تم حذف الكورس بنجاح!");
+      loadCourses();
+    } catch (err) {
+      showAlert("فشل الحذف، حاول مرة أخرى");
+    }
+  };
+
+  // إنشاء كورس جديد
+  document.getElementById("createCourseBtn").addEventListener("click", async () => {
+    if (!selectedTeacherId) return showAlert("اختر المدرس أولاً");
+    
+    const name = document.getElementById("courseName").value.trim();
+    const desc = document.getElementById("courseDesc").value.trim();
+    const price = document.getElementById("coursePrice").value.trim();
+    
+    if (!name || !desc || !price) return showAlert("أكمل جميع الحقول");
+
+    try {
+      const courseRef = push(ref(db, "courses"));
+      const newCourseData = {
+        name,
+        description: desc,
+        price,
+        teacherId: selectedTeacherId,
+        createdAt: Date.now()
+      };
+
+      await set(courseRef, newCourseData);
+      await set(ref(db, `teachers/${selectedTeacherId}/courses/${courseRef.key}`), true);
+
+      showAlert("✅ تم إنشاء الكورس بنجاح!");
+      document.getElementById("courseName").value = "";
+      document.getElementById("courseDesc").value = "";
+      document.getElementById("coursePrice").value = "";
+      loadCourses();
+    } catch (err) {
+      showAlert("خطأ أثناء إنشاء الكورس");
+    }
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    loadTeachers();
+  });
+
+  document.querySelector(".logout").addEventListener("click", () => {
+    window.location.href = "admin.html";
+  });
+</script>
+</body>
+</html>

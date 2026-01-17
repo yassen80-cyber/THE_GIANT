@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>منصة العملاق | محرك التعلم الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --primary: #00b2ff; 
+            --accent: #00ff88;
+            --bg: #050810; 
+            --card-bg: #0f172a; 
+            --text: #f8fafc; 
+        }
+        
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            overflow-x: hidden; 
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container { max-width: 1000px; margin: 15px auto; padding: 0 15px; }
+
+        /* ┘Е┘Ж╪╖┘В╪й ╪з┘Д┘Б┘К╪п┘К┘И ╪з┘Д┘Е╪к╪╖┘И╪▒╪й */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 178, 255, 0.3);
+            aspect-ratio: 16 / 9;
+            border: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* ╪н┘Е╪з┘К╪й ╪з┘Д╪┤╪з╪┤╪й ╪з┘Д╪│┘И╪п╪з╪б ╪з┘Д┘Е╪╣╪▓╪▓╪й */
+        #blackout {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, #111 0%, #000 100%);
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #blackout h2 { color: var(--primary); font-size: 1.8rem; margin-bottom: 10px; }
+        #blackout p { color: #94a3b8; max-width: 300px; line-height: 1.5; }
+
+        iframe, video { width: 100%; height: 100%; border: none; }
+
+        /* ┘Г╪з╪▒╪к ╪з┘Д┘Е╪╣┘Д┘И┘Е╪з╪к ╪з┘Д╪к╪┤╪м┘К╪╣┘К */
+        .info-card { 
+            background: var(--card-bg); 
+            margin-top: 20px; 
+            padding: 30px; 
+            border-radius: 20px; 
+            border-right: 5px solid var(--primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-card::before {
+            content: "THE GIANT";
+            position: absolute;
+            top: -10px; left: -10px;
+            font-size: 5rem;
+            font-weight: 900;
+            color: rgba(255,255,255,0.02);
+            pointer-events: none;
+        }
+
+        .lesson-title { 
+            font-size: 1.8rem; 
+            margin: 0 0 10px 0; 
+            background: linear-gradient(to left, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900; 
+        }
+
+        .motivation-tag {
+            display: inline-block;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--accent);
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .description-box { color: #cbd5e1; line-height: 1.8; font-size: 1rem; }
+
+        /* ┘Д┘И╪п╪▒ ╪з┘Д╪╣┘Е┘Д╪з┘В */
+        #loader { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10000; }
+        .spinner { 
+            width: 60px; height: 60px; 
+            border: 4px solid rgba(0, 178, 255, 0.1); 
+            border-top: 4px solid var(--primary); 
+            border-radius: 50%; 
+            animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .back-btn { color: var(--primary); text-decoration: none; font-weight: bold; display: block; margin-bottom: 15px; }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+
+<div id="loader">
+    <div class="spinner"></div>
+    <h2 style="color:var(--primary); margin-top:20px; font-weight:900;">THE GIANT</h2>
+    <p id="motivateText" style="color:#64748b; font-weight:bold;">استعد لتجربة تعليمية فريدة...</p>
+</div>
+
+<div class="container">
+    <a href="dashboard.html" class="back-btn">← العودة للمنهج</a>
+    
+    <div class="video-wrapper" id="videoContainer">
+        <div id="blackout">
+            <h2>⚠️ رصيد الحماية نشط</h2>
+            <p>تم إخفاء المحتوى لأنك حاولت تصوير الشاشة أو تسجيل الفيديو. حقوق المنصة محفوظة يا بطل!</p>
+            <button onclick="location.reload()" style="background:var(--primary); border:none; padding:10px 20px; border-radius:10px; color:#000; font-weight:bold; margin-top:15px; cursor:pointer;">إعادة تحميل الحصة</button>
+        </div>
+        <div id="playerContent" style="height: 100%; width: 100%; display: flex; justify-content: center; align-items: center; background:#000;">
+            <span style="color:#222;">SYSTEM CONNECTING...</span>
+        </div>
+    </div>
+
+    <div style="background: rgba(255, 77, 77, 0.1); border: 1px dashed #ff4d4d; color: #ff4d4d; padding: 12px; border-radius: 12px; margin-top: 15px; display: flex; align-items: center; gap: 10px; font-size: 0.9rem; font-weight: bold;">
+        <span>⚠️</span>
+        <span>تنبيه هام: لضمان استمرار عمل الفيديو، يُرجى عدم محاولة تصوير الشاشة أو استخدام برامج التسجيل، حيث يتم تسجيل أي محاولة اختراق تلقائياً.</span>
+    </div>
+
+    <div class="info-card">
+        <div class="motivation-tag">🚀 أنت اليوم أفضل من الأمس!</div>
+        <h1 class="lesson-title" id="lessonTitle">جاري استدعاء البيانات...</h1>
+        <div id="lessonDesc" class="description-box"></div>
+    </div>
+</div>
+
+
+<script type="module" >
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getDatabase, ref, get, onValue, set, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+        authDomain: "ylearn-fe1fa.firebaseapp.com",
+        databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+        projectId: "ylearn-fe1fa",
+        storageBucket: "ylearn-fe1fa.appspot.com",
+        messagingSenderId: "1092852055944",
+        appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let currentUserData = null; 
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const lessonId = urlParams.get('lessonId');
+    const grade = urlParams.get('grade');
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = 'login.html'; return; }
+        
+        const localSid = localStorage.getItem('user_session_id');
+        onValue(ref(db, `users/${user.uid}`), (snap) => {
+            if (snap.exists()) {
+                currentUserData = snap.val();
+                if (currentUserData.currentSession !== localSid) {
+                    window.location.href = 'login.html';
+                }
+            }
+        });
+
+        // استدعاء دالة التحقق من الدفع قبل التحميل
+        verifyAccessAndLoad(user.uid);
+    });
+
+    async function verifyAccessAndLoad(uid) {
+        if (!lessonId || !grade) {
+            alert("خطأ في بيانات الحصة");
+            window.location.href = 'dashboard.html';
+            return;
+        }
+
+        try {
+            // جلب بيانات الفيديو وحالة الشراء في وقت واحد للسرعة
+            const [videoSnap, purchaseSnap] = await Promise.all([
+                get(ref(db, `grades/${grade}/videos/${lessonId}`)),
+                get(ref(db, `students/${uid}/purchased/${lessonId}`))
+            ]);
+
+            if (!videoSnap.exists()) {
+                alert("هذه الحصة غير موجودة أو تم حذفها");
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            const videoData = videoSnap.val();
+            const isFree = (Number(videoData.price) === 0 || !videoData.price);
+            const isPurchased = purchaseSnap.exists();
+
+            // التحقق النهائي: إذا كانت مجانية أو تم شراؤها يفتح الفيديو
+            if (isFree || isPurchased) {
+                renderPlayer(videoData);
+            } else {
+                // إذا لم يدفع وحاول الدخول عبر الرابط مباشرة
+                alert("عذراً يا بطل، هذه الحصة تتطلب التفعيل أولاً.");
+                window.location.href = 'dashboard.html';
+            }
+
+        } catch (e) {
+            console.error("Access Error:", e);
+            alert("حدث خطأ أثناء التحقق من الصلاحيات");
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    function renderPlayer(data) {
+        const container = document.getElementById('playerContent');
+        document.getElementById('lessonTitle').textContent = data.title;
+        document.getElementById('lessonDesc').textContent = data.note || "مشاهدة ممتعة!";
+        
+        let url = data.video;
+        
+        if (url.includes('iframe')) { 
+            container.innerHTML = url; 
+        } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            let vidId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('/').pop();
+            container.innerHTML = `<iframe id="player" src="https://www.youtube.com/embed/${vidId}?rel=0&modestbranding=1" allow="autoplay; fullscreen"></iframe>`;
+        } else {
+            container.innerHTML = `<video id="player" controls controlsList="nodownload" oncontextmenu="return false;"><source src="${url}" type="video/mp4"></video>`;
+        }
+    }
+
+    async function reportAbuse(reason) {
+        if (!auth.currentUser) return;
+        const reportRef = ref(db, `security_logs/${auth.currentUser.uid}`);
+        await push(reportRef, {
+            studentName: currentUserData ? currentUserData.fullName : "Unknown",
+            studentPhone: currentUserData ? currentUserData.studentNumber : "Unknown",
+            reason: reason,
+            lessonId: lessonId,
+            timestamp: serverTimestamp(),
+            userAgent: navigator.userAgent
+        });
+    }
+
+    const blackout = document.getElementById('blackout');
+    const playerContainer = document.getElementById('playerContent');
+
+    function triggerProtection(reason) {
+        playerContainer.innerHTML = `<div style="background:#000; color:#ff4d4d; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; font-weight:bold;">⚠️ نظام الحماية نشط<br>تم تسجيل محاولة اختراق وإرسال بلاغ للإدارة</div>`;
+        blackout.style.display = 'flex';
+        reportAbuse(reason); 
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'U')) {
+            e.preventDefault();
+            triggerProtection("Keyboard Shortcuts / Inspect Element");
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        if (window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 160) {
+            triggerProtection("Window Resize / DevTools");
+        }
+    });
+
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+</script>
+</body>
+</html>

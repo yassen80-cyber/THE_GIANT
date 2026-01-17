@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>📘 إدارة محتوى الكورسات - منصة THE GIANT</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #00b2ff;
+    --bg-dark: #0b0f19;
+    --card-bg: #1e2636;
+    --text-main: #ffffff;
+    --text-muted: #a0aec0;
+    --danger: #ef4444;
+    --success: #10b981;
+  }
+
+  body {
+    margin: 0;
+    font-family: "Cairo", sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-main);
+    line-height: 1.6;
+  }
+
+  header {
+    background: #111827;
+    padding: 1rem 5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  header h1 { color: var(--primary); margin: 0; font-size: 1.2rem; }
+
+  .back-btn {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+  }
+
+  .back-btn:hover { background: var(--primary); color: #fff; }
+
+  .container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+
+  .admin-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  h2 {
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    background: #111827;
+    color: #fff;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .add-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 0.8rem;
+    width: 100%;
+    font-weight: 700;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .add-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,178,255,0.3); }
+
+  .section { display: none; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); }
+  .visible { display: block; animation: fadeIn 0.4s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .content-item {
+    background: #161d2b;
+    border-right: 4px solid var(--primary);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .content-info h3 { margin: 0; font-size: 1rem; color: #fff; }
+  .content-info p { margin: 5px 0 0; font-size: 0.85rem; color: var(--text-muted); }
+  .price-tag { color: var(--primary); font-weight: bold; font-size: 0.9rem; margin-top: 5px; display: block; }
+
+  .delete-btn {
+    background: rgba(230, 57, 70, 0.1);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+
+  .delete-btn:hover { background: var(--danger); color: #fff; }
+
+  .giant-alert-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+  .giant-alert-box { background: var(--card-bg); border-radius: 20px; padding: 2rem; text-align: center; width: 85%; max-width: 350px; }
+  .giant-alert-box button { background: var(--primary); color: #fff; border: none; padding: 0.6rem 2rem; border-radius: 8px; margin-top: 1rem; cursor: pointer; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📘 إدارة المحتوى</h1>
+  <button class="back-btn" onclick="window.location.href='admin.html'">الرئيسية</button>
+</header>
+
+<div class="container">
+  
+  <div class="admin-card">
+    <h2>🎯 الخطوة الأولى: الكورس/الصف والنوع</h2>
+    <select id="targetType">
+      <option value="course">🏫 كورس محدد</option>
+      <option value="grade">📚 صف دراسي عام</option>
+    </select>
+    <select id="courseSelect"><option value="">-- اختر الوجهة المستهدفة --</option></select>
+    <select id="contentType">
+      <option value="">-- ماذا تريد أن تضيف الآن؟ --</option>
+      <option value="شرح">📖 إضافة حصة / فيديو شرح</option>
+      <option value="امتحان">📝 إنشاء امتحان جديد</option>
+      <option value="واجب">📚 إضافة واجب دراسي</option>
+      <option value="مجاني">🎥 فيديو في القسم المجاني</option>
+    </select>
+  </div>
+
+  <div class="admin-card" id="formContainer" style="display: none;">
+    
+    <div id="lessonSection" class="section">
+      <h2>📖 تفاصيل الحصة</h2>
+      <input type="text" id="lessonTitle" placeholder="عنوان الحصة (مثلاً: المحاضرة الأولى)">
+      <textarea id="lessonNote" placeholder="اكتب وصفاً بسيطاً للطالب عن هذه الحصة..."></textarea>
+      <div class="grid-2">
+          <input type="text" id="lessonVideo" placeholder="رابط الفيديو (YouTube / Drive)">
+          <input type="number" id="lessonPrice" placeholder="السعر (0 = مجاني)">
+      </div>
+      <button id="addLessonBtn" class="add-btn">حفظ ونشر الحصة</button>
+    </div>
+
+    <div id="freevidSection" class="section">
+      <h2>🎥 فيديو مجاني للعامة</h2>
+      <input type="text" id="freevidTitle" placeholder="عنوان الفيديو">
+      <input type="text" id="freevidLink" placeholder="رابط الفيديو">
+      <button id="addFreevidBtn" class="add-btn">إضافة لقسم المجاني</button>
+    </div>
+
+    <div id="examSection" class="section">
+      <h2>📝 بيانات الامتحان</h2>
+      <input type="text" id="examTitle" placeholder="اسم الامتحان">
+      <div class="grid-2">
+         <input type="number" id="examTime" placeholder="المدة (دقائق)">
+         <span style="font-size: 0.8rem; color: var(--text-muted)">اترك الوصف بالأسفل</span>
+      </div>
+      <textarea id="examDesc" placeholder="تعليمات الامتحان للطالب"></textarea>
+      <button id="addExamBtn" class="add-btn">إنشاء مسودة الامتحان</button>
+    </div>
+
+    <div id="homeworkSection" class="section">
+      <h2>📚 إضافة واجب</h2>
+      <input type="text" id="homeworkTitle" placeholder="عنوان الواجب">
+      <textarea id="homeworkDesc" placeholder="ما المطلوب من الطالب في هذا الواجب؟"></textarea>
+      <button id="addHomeworkBtn" class="add-btn">حفظ الواجب</button>
+    </div>
+
+    <div id="questionSection" class="section" style="margin-top: 2rem; border-top: 2px dashed #333; padding-top: 1rem;">
+      <h2 style="color: #ff9f43;">❓ إضافة أسئلة</h2>
+      <select id="targetSelect"><option value="">-- حدد (الامتحان/الواجب) الذي ستضيف له --</option></select>
+      
+      <select id="questionType">
+        <option value="اختياري">سؤال اختيار من متعدد</option>
+        <option value="مقالي">سؤال مقالي (نصي)</option>
+      </select>
+      
+      <input type="text" id="questionText" placeholder="نص السؤال">
+      <div id="optionsGroup">
+        <input type="text" id="opt1" placeholder="الاختيار الأول">
+        <input type="text" id="opt2" placeholder="الاختيار الثاني">
+        <input type="text" id="opt3" placeholder="الاختيار الثالث">
+      </div>
+      <input type="text" id="correct" placeholder="الإجابة الصحيحة">
+      <button id="addQuestionBtn" class="add-btn" style="background: #ff9f43;">إدراج السؤال الآن</button>
+    </div>
+
+  </div>
+
+  <div class="admin-card">
+    <h2>📂 المحتوى الحالي</h2>
+    <div id="contentContainer">
+      <p style="text-align: center; color: var(--text-muted)">اختر وجهة لعرض محتوياتها</p>
+    </div>
+  </div>
+
+  <div class="admin-card">
+    <h2>🌐 الفيديوهات العامة (المجانية)</h2>
+    <div id="freevidContainer"></div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { getDatabase, ref, get, push, set, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+  authDomain: "ylearn-fe1fa.firebaseapp.com",
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+  projectId: "ylearn-fe1fa",
+  storageBucket: "ylearn-fe1fa.firebasestorage.app",
+  messagingSenderId: "1092852055944",
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const courseSelect = document.getElementById("courseSelect");
+const targetType = document.getElementById("targetType");
+const contentType = document.getElementById("contentType");
+const formContainer = document.getElementById("formContainer");
+const contentContainer = document.getElementById("contentContainer");
+const targetSelect = document.getElementById("targetSelect");
+
+let selectedCourseId = null;
+let currentUser = null;
+
+function giantAlert(msg){
+  const overlay=document.createElement("div");
+  overlay.className="giant-alert-overlay";
+  overlay.innerHTML=`<div class="giant-alert-box"><h3>THE GIANT</h3><p>${msg}</p><button id="closeAlert">حسناً</button></div>`;
+  document.body.appendChild(overlay);
+  document.getElementById("closeAlert").onclick = () => overlay.remove();
+}
+
+async function init() {
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+    onAuthStateChanged(auth, async (user) => {
+      if(user) { 
+        // تم تصحيح الـ UID ليبدأ بحرف L كبير كما أرسلته
+        if (user.uid !== "lSpi591awfQMcRFU62CAM3108Hu1") {
+          window.location.href = "index.html";
+          return;
+        }
+        currentUser = user; 
+        await loadCourses();
+        await loadFreevids();
+      }
+      else { window.location.href = "login.html"; }
+    });
+    setupEventListeners();
+  } catch (err) { console.error("Initialization Error:", err); }
+}
+
+async function loadCourses(){
+  const type = targetType.value;
+  courseSelect.innerHTML=`<option value="">-- اختر ${type === "course" ? 'الكورس' : 'الصف'} المستهدف --</option>`;
+  
+  if(type === "grade") {
+    const grades = [
+      {id: "1prim", name: "الأول الابتدائي"}, {id: "2prim", name: "الثاني الابتدائي"}, {id: "3prim", name: "الثالث الابتدائي"},
+      {id: "4prim", name: "الرابع الابتدائي"}, {id: "5prim", name: "الخامس الابتدائي"}, {id: "6prim", name: "السادس الابتدائي"},
+      {id: "1prep", name: "الأول الإعدادي"}, {id: "2prep", name: "الثاني الإعدادي"}, {id: "3prep", name: "الثالث الإعدادي"},
+      {id: "1sec", name: "الأول الثانوي"}, {id: "2sec", name: "الثاني الثانوي"}, {id: "3sec", name: "الثالث الثانوي"}
+    ];
+    grades.forEach(g => {
+      const opt = document.createElement("option");
+      opt.value = g.id;
+      opt.textContent = g.name;
+      courseSelect.appendChild(opt);
+    });
+  } else {
+    const snap = await get(ref(db, "courses"));
+    if(snap.exists()){
+      Object.entries(snap.val()).forEach(([id,c])=>{
+        const opt=document.createElement("option");
+        opt.value=id; opt.textContent=c.name; courseSelect.appendChild(opt);
+      });
+    }
+  }
+}
+
+async function loadContent(){
+  if(!selectedCourseId) {
+      contentContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted)">اختر وجهة لعرض محتوياتها</p>';
+      return;
+  }
+  
+  contentContainer.innerHTML='<p style="text-align:center">جاري التحميل...</p>';
+  const type = targetType.value;
+  let combinedData = {};
+
+  try {
+    if(type === "course") {
+      const snap = await get(ref(db, `courses/${selectedCourseId}/content`));
+      if(snap.exists()) combinedData = snap.val();
+    } else {
+      const [contSnap, vidSnap] = await Promise.all([
+        get(ref(db, `grades/${selectedCourseId}/content`)),
+        get(ref(db, `grades/${selectedCourseId}/videos`))
+      ]);
+      combinedData = { ...(contSnap.val() || {}), ...(vidSnap.val() || {}) };
+    }
+    
+    contentContainer.innerHTML = "";
+    if(Object.keys(combinedData).length === 0){
+        contentContainer.innerHTML="<p style='text-align:center'>لا يوجد محتوى مضاف هنا.</p>";
+        return;
+    }
+    
+    const items = Object.entries(combinedData).sort((a,b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+    
+    items.forEach(([id,item])=>{
+      if(item.teacher !== currentUser?.uid) return;
+      
+      const div=document.createElement("div");
+      div.className="content-item";
+      const icon = item.type==="امتحان"?"📝":item.type==="واجب"?"📚":"📖";
+      
+      const priceHtml = item.type === "شرح" ? `<span class="price-tag">السعر: ${item.price || 0} ج.م</span>` : "";
+
+      div.innerHTML=`
+        <div class="content-info">
+          <h3>${icon} ${item.title}</h3>
+          <p>${item.type} | ${item.note||item.desc||"لا يوجد وصف"}</p>
+          ${priceHtml}
+        </div>
+        <div class="item-actions">
+          <button class="edit-btn" onclick="editContent('${id}', '${item.type}')">تعديل</button>
+          <button class="delete-btn" onclick="deleteContent('${id}', '${item.type}')">حذف</button>
+        </div>
+      `;
+      contentContainer.appendChild(div);
+    });
+  } catch (err) {
+    contentContainer.innerHTML="<p style='text-align:center; color:red'>خطأ في تحميل البيانات</p>";
+  }
+}
+
+window.deleteContent = async function(id, itemType){
+  if(confirm("سيتم حذف المحتوى نهائياً، هل أنت متأكد؟")) {
+    const type = targetType.value;
+    let path = (type === "course") 
+        ? `courses/${selectedCourseId}/content/${id}` 
+        : `grades/${selectedCourseId}/${(itemType === "شرح") ? "videos" : "content"}/${id}`;
+    
+    await remove(ref(db, path));
+    giantAlert("تم الحذف بنجاح ✅");
+    await loadContent();
+  }
+};
+
+window.editContent = async function(id, itemType) {
+    const newTitle = prompt("أدخل العنوان الجديد:");
+    if(!newTitle) return;
+    const type = targetType.value;
+    let path = (type === "course") 
+        ? `courses/${selectedCourseId}/content/${id}` 
+        : `grades/${selectedCourseId}/${(itemType === "شرح") ? "videos" : "content"}/${id}`;
+
+    await update(ref(db, path), { title: newTitle });
+    giantAlert("تم التعديل بنجاح ✅");
+    await loadContent();
+};
+
+async function loadFreevids(){
+  const container = document.getElementById("freevidContainer");
+  const snap = await get(ref(db, "freevid"));
+  container.innerHTML = "";
+  if(!snap.exists()) return;
+  
+  Object.entries(snap.val()).forEach(([id, vid])=>{
+    const div = document.createElement("div");
+    div.className = "content-item";
+    div.innerHTML = `
+      <div class="content-info"><h3>🎥 ${vid.title}</h3></div>
+      <button class="delete-btn" onclick="deleteFreevid('${id}')">حذف</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function setupEventListeners(){
+  targetType.onchange = async () => {
+    await loadCourses();
+    selectedCourseId = null;
+    contentContainer.innerHTML = '<p style="text-align: center; color: var(--text-muted)">اختر وجهة لعرض محتوياتها</p>';
+  };
+  
+  courseSelect.onchange = async () => {
+    selectedCourseId = courseSelect.value;
+    await loadContent();
+  };
+
+  contentType.onchange = () => {
+    formContainer.style.display = contentType.value ? "block" : "none";
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("visible"));
+    
+    const val = contentType.value;
+    if(val==="شرح") document.getElementById("lessonSection").classList.add("visible");
+    else if(val==="امتحان"){ 
+      document.getElementById("examSection").classList.add("visible");
+      document.getElementById("questionSection").classList.add("visible");
+      loadTargetList("امتحان");
+    }
+    else if(val==="واجب"){ 
+      document.getElementById("homeworkSection").classList.add("visible");
+      document.getElementById("questionSection").classList.add("visible");
+      loadTargetList("واجب");
+    }
+    else if(val==="مجاني") document.getElementById("freevidSection").classList.add("visible");
+  };
+
+  document.getElementById("addLessonBtn").onclick = async () => {
+    const title = document.getElementById("lessonTitle").value.trim();
+    const video = document.getElementById("lessonVideo").value.trim();
+    const price = document.getElementById("lessonPrice").value.trim();
+    if(!selectedCourseId || !title) return giantAlert("أكمل البيانات أولاً");
+    const path = (targetType.value === "grade") ? `grades/${selectedCourseId}/videos` : `courses/${selectedCourseId}/content`;
+    await push(ref(db, path), {
+      type:"شرح", title, note: document.getElementById("lessonNote").value, video,
+      price: Number(price) || 0, teacher: currentUser.uid, createdAt: Date.now()
+    });
+    giantAlert("تمت إضافة الحصة بنجاح ✅");
+    ["lessonTitle", "lessonVideo", "lessonNote", "lessonPrice"].forEach(id => document.getElementById(id).value = "");
+    await loadContent();
+  };
+
+  // ✅ تم إصلاح إضافة الواجب هنا
+  document.getElementById("addHomeworkBtn").onclick = async () => {
+    const title = document.getElementById("homeworkTitle").value.trim();
+    const desc = document.getElementById("homeworkDesc").value.trim();
+    if(!selectedCourseId || !title) return giantAlert("أكمل بيانات الواجب أولاً");
+    
+    const path = (targetType.value === "grade") ? `grades/${selectedCourseId}/content` : `courses/${selectedCourseId}/content`;
+    
+    await push(ref(db, path), {
+      type: "واجب",
+      title: title,
+      desc: desc,
+      teacher: currentUser.uid,
+      createdAt: Date.now()
+    });
+    
+    giantAlert("تمت إضافة الواجب بنجاح ✅");
+    document.getElementById("homeworkTitle").value = "";
+    document.getElementById("homeworkDesc").value = "";
+    await loadContent();
+    await loadTargetList("واجب");
+  };
+
+  document.getElementById("addFreevidBtn").onclick = async () => {
+    const title = document.getElementById("freevidTitle").value.trim();
+    const link = document.getElementById("freevidLink").value.trim();
+    if(!title || !link) return giantAlert("أكمل البيانات");
+    await push(ref(db,"freevid"),{title, link, createdAt: Date.now()});
+    giantAlert("تم الإضافة ✅");
+    document.getElementById("freevidTitle").value = ""; 
+    document.getElementById("freevidLink").value = "";
+    await loadFreevids();
+  };
+
+  document.getElementById("addExamBtn").onclick = async () => {
+    const title = document.getElementById("examTitle").value.trim();
+    if(!selectedCourseId || !title) return giantAlert("أكمل البيانات");
+    const path = targetType.value === "course" ? "courses" : "grades";
+    await push(ref(db, `${path}/${selectedCourseId}/content`), {
+      type:"امتحان", title, desc: document.getElementById("examDesc").value, 
+      time: document.getElementById("examTime").value, teacher: currentUser.uid, createdAt: Date.now()
+    });
+    giantAlert("تم إنشاء الامتحان ✅");
+    await loadTargetList("امتحان");
+    await loadContent();
+  };
+
+  document.getElementById("addQuestionBtn").onclick = async () => {
+    const targetId = targetSelect.value;
+    const question = document.getElementById("questionText").value.trim();
+    if(!targetId || !question) return giantAlert("اختر المستهدف واكتب السؤال");
+    const tPath = targetType.value === "course" ? "courses" : "grades";
+    const refQ = push(ref(db, `${tPath}/${selectedCourseId}/content/${targetId}/questions`));
+    const type = document.getElementById("questionType").value;
+    const data = { type, question, correct: document.getElementById("correct").value };
+    if(type === "اختياري") {
+        data.opt1 = document.getElementById("opt1").value;
+        data.opt2 = document.getElementById("opt2").value;
+        data.opt3 = document.getElementById("opt3").value;
+    }
+    await set(refQ, data);
+    giantAlert("تم إضافة السؤال ✅");
+    ["questionText", "opt1", "opt2", "opt3", "correct"].forEach(id => document.getElementById(id).value = "");
+  };
+}
+
+async function loadTargetList(type){
+  targetSelect.innerHTML='<option value="">-- جاري التحميل... --</option>';
+  const tPath = targetType.value === "course" ? "courses" : "grades";
+  const snap = await get(ref(db,`${tPath}/${selectedCourseId}/content`));
+  targetSelect.innerHTML='<option value="">-- اختر المستهدف --</option>';
+  if(snap.exists()){
+    Object.entries(snap.val()).forEach(([id,item])=>{
+      if(item.type === type && item.teacher === currentUser.uid){
+        const opt = document.createElement("option");
+        opt.value = id; opt.textContent = item.title;
+        targetSelect.appendChild(opt);
+      }
+    });
+  }
+}
+
+init();
+</script>
+</body>
+</html>

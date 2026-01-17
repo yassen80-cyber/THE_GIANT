@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>لوحة تحكم الأدمن | THE GIANT</title>
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {--bg:#0b0f19;--card:#111827;--accent:#00b2ff;--ok:#10b981;--danger:#ef4444;--muted:#94a3b8;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:#fff;font-family:"Cairo",sans-serif;margin:0;padding:20px;-webkit-font-smoothing:antialiased;}
+h1{text-align:center;color:var(--accent);margin:0 0 20px 0; font-weight: 900;}
+
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px;}
+.card{background:var(--card);border-radius:18px;padding:1.5rem;text-align:center;transition:0.3s;cursor:pointer;box-shadow:0 10px 25px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.05); position: relative;}
+.card:hover{transform:translateY(-5px);border-color:var(--accent);background:#161e2d;}
+.card h2{color:var(--accent);margin:0 0 5px; font-size: 1.2rem;}
+.card p{color:var(--muted);margin:0; font-size: 0.85rem;}
+.student-count-badge { background: var(--ok); color: #fff; padding: 2px 12px; border-radius: 20px; font-weight: bold; font-size: 0.75rem; margin-top: 8px; display: inline-block; }
+
+#notifBtn{position:fixed;bottom:20px;left:20px;background:var(--accent);border:none;border-radius:50%;width:60px;height:60px;color:#fff;font-size:25px;cursor:pointer;z-index:100;box-shadow: 0 5px 15px rgba(0,178,255,0.4);}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.9);display:none;align-items:center;justify-content:center;z-index:200;backdrop-filter: blur(5px);}
+.modal .box{background:var(--card);border-radius:24px;padding:20px;width:95%;max-width:1100px;max-height:90vh;overflow:hidden; display:flex; flex-direction:column; border:1px solid rgba(255,255,255,0.1);}
+
+.tabs{display:flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none;}
+.tabs button{background:#1e2636;color:var(--muted);border:none;padding:10px 20px;cursor:pointer;border-radius:12px;transition:0.3s;font-weight:bold; font-family: 'Cairo'; white-space: nowrap;}
+.tabs button.active{background:var(--accent);color:#fff;}
+
+.tab-content{display:none; overflow-y: auto; flex: 1; padding-right: 5px;}
+.tab-content.active{display:block;}
+
+.req{background:rgba(255,255,255,0.02);border-radius:15px;padding:15px;margin-bottom:12px; border: 1px solid rgba(255,255,255,0.05); position: relative;}
+.req p{margin:4px 0; font-size:0.9rem;}
+.req strong{color:var(--accent);}
+
+.codes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; max-height: 400px; overflow-y: auto; direction: ltr; }
+.code-box { background: #0b0f19; border: 1px solid #1e2636; color: var(--muted); padding: 8px; border-radius: 8px; font-size: 11px; text-align: center; font-family: monospace; cursor: pointer; transition: 0.2s; }
+.code-box:hover { border-color: var(--accent); color: var(--accent); }
+.code-box[data-used="true"] { opacity: 0.4; border-color: var(--danger); color: var(--danger); text-decoration: line-through; order: 2; }
+.code-box[data-used="false"] { order: 1; border-color: var(--ok); color: var(--ok); font-weight: bold;}
+
+.load-more-btn { background: #1e2636; color: var(--accent); border: 1px solid var(--accent); padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 13px; font-family: 'Cairo'; margin: 15px auto; display: block; width: fit-content; font-weight: bold; }
+.load-more-btn:hover { background: var(--accent); color: #fff; }
+
+.btn-export { background: var(--ok); color: white; border: none; padding: 8px 16px; border-radius: 10px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; margin-bottom: 10px; display: inline-flex; align-items: center; gap: 5px; }
+.clear-btn { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-family: 'Cairo'; font-size: 0.8rem; margin-top: 10px; }
+
+.search-box input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; background: #1e2636; color: white; font-family: "Cairo"; }
+.btn-logout { background: var(--danger); color: white; border: none; padding: 12px 30px; border-radius: 15px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; display: block; margin: 20px auto; }
+</style>
+</head>
+<body>
+
+<button id="notifBtn" title="فتح الأدوات السريعة">🎫</button>
+
+<h1>👨‍💻 لوحة تحكم العملاق</h1>
+
+<div class="dashboard">
+  <div class="card" onclick="window.location.href='teachers.html'"><h2>👨‍🏫 المدرسين</h2><p>إدارة هيئة التدريس</p></div>
+  <div class="card" onclick="window.location.href='courses.html'"><h2>📚 الكورسات</h2><p>الكورسات المدفوعة والمجانية</p></div>
+  <div class="card" onclick="window.location.href='content.html'"><h2>📖 المحتوى</h2><p>رفع الحصص والملفات</p></div>
+  <div class="card" id="studentsCard">
+      <h2>👨‍🎓 الطلاب</h2>
+      <p>إدارة بيانات الطلاب</p>
+      <div id="totalStudents" class="student-count-badge">...</div>
+  </div>
+  <div class="card" onclick="window.location.href='details.html'"><h2>📄 التقارير</h2><p>تفاصيل الطالب الشاملة</p></div>
+  <div class="card" onclick="window.location.href='reply.html'"><h2>رؤية المقترحات<h2/><p>روية مقترحات الطلاب</p></div>
+</div>
+
+<button class="btn-logout" id="logoutBtn">🔒 تسجيل الخروج</button>
+
+<div id="notifModal" class="modal">
+  <div class="box">
+    <div class="tabs">
+      <button id="tab-codes" class="active">🎫 الأكواد (2000 كود)</button>
+      <button id="tab-students">👨‍🎓 الطلاب</button>
+      <button id="tab-grades">🧮 الدرجات</button>
+      <button id="tab-homeworks">📘 الواجبات</button>
+      <button id="tab-reviews">⭐ التقييمات</button>
+    </div>
+
+    <div id="codesTab" class="tab-content active">
+        <div class="search-box"><input type="text" id="codeSearch" placeholder="🔍 ابحث عن اسم الكورس أو الحصة..."></div>
+        <div id="codesList"></div>
+    </div>
+
+    <div id="studentsTab" class="tab-content">
+      <div class="search-box"><input type="text" id="studentSearch" placeholder="🔍 ابحث بالاسم أو رقم الهاتف..."></div>
+      <div id="studentsList"></div>
+    </div>
+
+    <div id="gradesTab" class="tab-content">
+      <button class="btn-export" onclick="exportToCSV('grades')">📥 تصدير الدرجات Excel</button>
+      <div id="gradesList"></div>
+    </div>
+
+    <div id="homeworksTab" class="tab-content">
+      <button class="btn-export" onclick="exportToCSV('homeworks')">📥 تصدير الواجبات Excel</button>
+      <div id="homeworksList"></div>
+    </div>
+
+    <div id="reviewsTab" class="tab-content">
+      <button class="clear-btn" id="clearReviews">🗑️ مسح التقييمات</button>
+      <div id="reviewsList"></div>
+    </div>
+
+    <button onclick="closeModal()" style="background:#334155; padding:10px; border:none; border-radius:12px; color:#fff; cursor:pointer; font-family:'Cairo'; margin-top:10px;">إغلاق النافذة</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+import { getDatabase, ref, onValue, set, get, remove, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+    authDomain: "ylearn-fe1fa.firebaseapp.com",
+    databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+    projectId: "ylearn-fe1fa",
+    storageBucket: "ylearn-fe1fa.appspot.com",
+    messagingSenderId: "1092852055944",
+    appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+onAuthStateChanged(auth, (user) => {
+    if (!user || user.uid !== "lSpi591awfQMcRFU62CAM3108Hu1") {
+        window.location.href = "login.html";
+    }
+});
+
+document.getElementById("logoutBtn").onclick = () => signOut(auth);
+
+const tabs = ['codes', 'students', 'grades', 'homeworks', 'reviews'];
+window.switchTab = (target) => {
+    tabs.forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('active', t === target);
+        document.getElementById(`${t}Tab`).classList.toggle('active', t === target);
+    });
+    if(target === 'homeworks') loadHomeworks();
+    if(target === 'grades') loadGrades();
+};
+tabs.forEach(t => document.getElementById(`tab-${t}`).onclick = () => switchTab(t));
+
+window.closeModal = () => document.getElementById('notifModal').style.display='none';
+document.getElementById('notifBtn').onclick = () => {
+    document.getElementById('notifModal').style.display='flex';
+    loadCodesData();
+};
+
+document.getElementById('clearReviews').onclick = async () => {
+    if(confirm("⚠️ هل أنت متأكد من مسح كافة التقييمات نهائياً؟")) {
+        try {
+            await remove(ref(db, 'notifications/feedbacks'));
+            alert("✅ تم مسح التقييمات بنجاح.");
+        } catch(e) { alert("❌ خطأ."); }
+    }
+};
+
+// --- نظام توليد الأكواد مع "عرض 15 كود إضافي" ---
+async function generateCodesForElement(id, name, type, usedSet) {
+    const parent = document.createElement('div');
+    parent.className = 'req code-item-container';
+    parent.setAttribute('data-name', name.toLowerCase());
+    const prefix = id.slice(-5).toUpperCase();
+
+    parent.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <p><strong>${type}: ${name}</strong></p>
+            <button class="btn-export" style="font-size:10px; padding:4px 8px;">📋 نسخ أول كود متاح</button>
+        </div>
+        <div class="codes-grid"></div>
+        <div style="text-align:center;">
+             <button class="load-more-btn">🔽 عرض 15 كود إضافي</button>
+        </div>
+    `;
+
+    const grid = parent.querySelector('.codes-grid');
+    const loadMoreBtn = parent.querySelector('.load-more-btn');
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+    const getFixedSuffix = (idx, seed) => {
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+        hash += idx;
+        let res = '';
+        for (let j = 0; j < 3; j++) {
+            hash = (hash * 16807) % 2147483647;
+            res += chars.charAt(Math.abs(hash) % chars.length);
+        }
+        return res;
+    };
+
+    let displayedCount = 0;
+    const batchSize = 15; // تم تعديلها لتظهر 15 كوداً فقط
+
+    const renderNextBatch = () => {
+        const fragment = document.createDocumentFragment();
+        const start = displayedCount + 1;
+        const end = Math.min(displayedCount + batchSize, 2000);
+
+        for (let i = start; i <= end; i++) {
+            const suffix = getFixedSuffix(i, id);
+            const code = `GIANT-${prefix}-${2000 + i}-${suffix}`;
+            const isUsed = usedSet.has(code);
+            
+            const cDiv = document.createElement('div');
+            cDiv.className = 'code-box';
+            cDiv.setAttribute('data-used', isUsed);
+            cDiv.innerText = isUsed ? `🚩 ${code}` : code;
+            
+            cDiv.onclick = (e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(code);
+                alert(isUsed ? "الكود مستخدم!" : "تم النسخ: " + code);
+            };
+            fragment.appendChild(cDiv);
+        }
+        
+        grid.appendChild(fragment);
+        displayedCount = end;
+
+        if (displayedCount >= 2000) {
+            loadMoreBtn.style.display = 'none';
+        }
+    };
+
+    renderNextBatch(); // تحميل أول 15
+
+    loadMoreBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        renderNextBatch();
+    });
+
+    parent.querySelector('.btn-export').onclick = () => {
+        const firstFree = grid.querySelector('.code-box[data-used="false"]');
+        if (firstFree) {
+            navigator.clipboard.writeText(firstFree.innerText);
+            alert("تم نسخ: " + firstFree.innerText);
+        } else {
+            alert("اضغط عرض المزيد للبحث عن أكواد غير مستخدمة.");
+        }
+    };
+
+    return parent;
+}
+
+async function loadCodesData() {
+    const container = document.getElementById('codesList');
+    if (container.children.length > 0) return;
+    container.innerHTML = '<p style="text-align:center;">جاري تحضير الأكواد... 🚀</p>';
+    
+    const [coursesSnap, gradesSnap, usedSnap] = await Promise.all([
+        get(ref(db, 'courses')), get(ref(db, 'grades')), get(ref(db, 'usedCodes'))
+    ]);
+    
+    const usedSet = new Set(usedSnap.exists() ? Object.keys(usedSnap.val()) : []);
+    const frag = document.createDocumentFragment();
+
+    if(coursesSnap.exists()) {
+        for (const [id, c] of Object.entries(coursesSnap.val())) {
+            if (Number(c.price) > 0) frag.appendChild(await generateCodesForElement(id, c.name, '📚 كورس', usedSet));
+        }
+    }
+    
+    if(gradesSnap.exists()) {
+        for (const [gradeId, data] of Object.entries(gradesSnap.val())) {
+            if(data.videos) {
+                for (const [vId, v] of Object.entries(data.videos)) {
+                    if (v.price > 0) frag.appendChild(await generateCodesForElement(vId, v.title, `📖 حصة (${gradeId})`, usedSet));
+                }
+            }
+        }
+    }
+    setTimeout(() => { container.innerHTML = ''; container.appendChild(frag); }, 500);
+}
+
+// باقي السكربت (الطلاب، الدرجات، الواجبات) يظل كما هو ليعمل بشكل صحيح
+onValue(ref(db,'notifications/feedbacks'),s=>{
+    const reviewsList = document.getElementById('reviewsList');
+    reviewsList.innerHTML='';
+    if(!s.exists()){reviewsList.innerHTML='<p style="text-align:center;">لا توجد تقييمات.</p>';return;}
+    for(const [id,r] of Object.entries(s.val())){
+        const d=document.createElement('div');
+        d.className='req';
+        d.innerHTML=`<p>⭐ التقييم: ${r.rating||'-'}</p><p>💬 التعليق: ${r.message||'لا يوجد'}</p><p>📅 التعليق: ${r.timestamp||'لا يوجد'}</p>`;
+        reviewsList.appendChild(d);
+    }
+});
+
+onValue(ref(db, "users"), async snap => {
+    if(!snap.exists()) return;
+    const users = snap.val();
+    document.getElementById("totalStudents").innerText = Object.keys(users).length + " طالب";
+    const [studentsSnap, coursesSnap, gradesSnap] = await Promise.all([get(ref(db, "students")), get(ref(db, "courses")), get(ref(db, "grades"))]);
+    const allPurchases = studentsSnap.val() || {};
+    const mainCourses = coursesSnap.val() || {};
+    const gradesData = gradesSnap.val() || {};
+    const namesDictionary = {};
+    Object.entries(mainCourses).forEach(([id, data]) => { namesDictionary[id] = data.name; });
+    Object.values(gradesData).forEach(grade => { if (grade.videos) Object.entries(grade.videos).forEach(([vId, vData]) => { namesDictionary[vId] = vData.title; }); });
+
+    const container = document.getElementById('studentsList');
+    container.innerHTML = '';
+    window.allStudentsData = [];
+
+    Object.entries(users).forEach(([uid, user]) => {
+        const userPurchasedObj = allPurchases[uid]?.purchased || {};
+        const courseNames = Object.keys(userPurchasedObj).map(id => namesDictionary[id] || "عنصر غير معروف");
+        const div = document.createElement("div");
+        div.className = "req";
+        div.innerHTML = `<p>👤 الاسم: <strong style="color:var(--accent)">${user.fullName || "غير معروف"}</strong></p>
+            <p>📞 رقم الطالب: ${user.studentNumber || "-"}</p>
+            <p>📱 رقم ولي الأمر: ${user.parentNumber || "-"}</p>
+            <p>🎓 المرحلة: ${user.grade || "-"}</p>
+            <p style="margin-top:10px; font-weight:bold;">📘 المشتريات (كورسات وحصص):</p>
+            <ul style="color:#00b2ff; background:rgba(255,255,255,0.03); border-radius:12px; padding:10px 25px; margin:5px 0;">
+                ${courseNames.length > 0 
+                    ? courseNames.map(n => `<li style="margin-bottom:5px; font-size:0.9rem;">${n}</li>`).join("") 
+                    : "<li style='color:#666; list-style:none;'>لا يوجد مشتريات</li>"}
+            </ul>`;
+        container.appendChild(div);
+        window.allStudentsData.push({ el: div, search: (user.fullName + user.studentNumber).toLowerCase() });
+    });
+});
+
+window.exportToCSV = (type) => {
+    let csv = "\ufeffالاسم,الهاتف,الدرجة\n";
+    document.querySelectorAll(`#${type === 'grades' ? 'gradesList' : 'homeworksList'} .req`).forEach(el => {
+        const row = Array.from(el.querySelectorAll('p')).map(p => `"${p.innerText.split(': ')[1]}"`).join(",");
+        csv += row + "\n";
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    link.download = `${type}.csv`; link.click();
+};
+
+async function loadGrades() {
+    const container = document.getElementById('gradesList'); container.innerHTML = 'جاري التحميل...';
+    const snap = await get(ref(db, 'results')); container.innerHTML = '';
+    if(!snap.exists()) return;
+    Object.values(snap.val()).forEach(u => Object.values(u).forEach(g => {
+        const d = document.createElement('div'); d.className = 'req';
+        d.innerHTML = `<p>👤 الاسم: ${g.studentName||'-'}</p><p>📞 رقم الطالب: ${g.studentPhone||'-'}</p><p>📱 رقم ولي الأمر: ${g.parentPhone||'-'}</p><p>🧾 الامتحان: ${g.examTitle||'-'}</p><p>📊 الدرجة: ${g.score||0} / ${g.total||0}</p><p>⏳ الزمن المستغرق: ${g.timeTakenMin || 0}</p>`;
+        container.appendChild(d);
+    }));
+}
+
+async function loadHomeworks() {
+    const container = document.getElementById('homeworksList'); container.innerHTML = 'جاري التحميل...';
+    const snap = await get(ref(db, 'homeworkResult')); container.innerHTML = '';
+    if(!snap.exists()) return;
+    Object.values(snap.val()).forEach(u => Object.values(u).forEach(h => {
+        const d = document.createElement('div'); d.className = 'req';
+        d.innerHTML = `<p>👤 الاسم: ${h.name || 'غير معروف'}</p>
+        <p>📞 رقم الطالب: ${h.phone || '-'}</p>
+        <p>📱 رقم ولي الأمر: ${h.parentPhone || '-'}</p>
+        <p>📘 عنوان الواجب: ${h.title || '-'}</p>
+        <p>✅ صحيحة: ${h.correct || 0}</p>
+        <p>❌ خاطئة: ${h.wrong || 0}</p>
+        <p>📊 النسبة: ${h.percentage || 0}%</p>
+        <p>🧮 الدرجة: ${h.score || 0} / ${h.total || 0}</p>
+        <p>⏳ الزمن المستغرق: ${h.timeTakenMin || 0} دقيقة</p>`;
+        container.appendChild(d);
+    }));
+}
+
+document.getElementById("studentSearch").oninput = (e) => {
+    const val = e.target.value.toLowerCase();
+    window.allStudentsData.forEach(s => s.el.style.display = s.search.includes(val) ? "block" : "none");
+};
+
+document.getElementById("codeSearch").oninput = (e) => {
+    const val = e.target.value.toLowerCase();
+    document.querySelectorAll('.code-item-container').forEach(item => {
+        item.style.display = item.getAttribute('data-name').includes(val) ? 'block' : 'none';
+    });
+};
+
+document.getElementById("studentsCard").onclick = () => { document.getElementById('notifModal').style.display='flex'; switchTab('students'); };
+</script>
+</body>
+</html>

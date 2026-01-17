@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE GIANT - لوحة إدارة المقترحات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00b2ff;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg-dark: #070b14;
+            --card-bg: #111827;
+        }
+
+        body { margin: 0; font-family: 'Cairo', sans-serif; background-color: var(--bg-dark); color: #fff; direction: rtl; }
+        header { background: #0f172a; padding: 1.5rem; text-align: center; border-bottom: 2px solid var(--primary); box-shadow: 0 4px 15px rgba(0, 178, 255, 0.2); }
+        
+        #authOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-dark); z-index: 9999; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+        .stat-card { background: var(--card-bg); padding: 15px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .stat-card h3 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+
+        main { max-width: 1000px; margin: 2rem auto; padding: 0 15px; }
+        .message-card { background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 20px; border-right: 5px solid var(--primary); transition: 0.3s; position: relative; }
+        .message-card.new { border-right-color: var(--success); }
+        
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 0.8rem; margin-bottom: 10px; }
+        .badge-suggestion { background: rgba(0, 178, 255, 0.2); color: var(--primary); }
+        .badge-problem { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+
+        .msg-body { background: #0b1120; padding: 15px; border-radius: 10px; margin: 10px 0; line-height: 1.6; }
+        .reply-area { margin-top: 15px; display: flex; gap: 10px; }
+        
+        textarea { flex: 1; background: #1e293b; border: 1px solid #334155; border-radius: 8px; color: #fff; padding: 10px; font-family: 'Cairo'; }
+        button { cursor: pointer; border: none; border-radius: 8px; font-family: 'Cairo'; font-weight: bold; transition: 0.3s; padding: 10px 20px; }
+        
+        .btn-reply { background: var(--primary); color: #fff; }
+        .btn-seen { background: var(--success); color: #fff; margin-top: 10px; width: 100%; }
+        .btn-delete { background: var(--danger); color: #fff; position: absolute; left: 20px; top: 20px; padding: 5px 15px; font-size: 0.8rem; }
+        
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        .no-data { text-align: center; padding: 50px; opacity: 0.5; }
+
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="authOverlay">
+    <div class="loader"></div>
+    <p id="authText">جاري التحقق من صلاحيات المدير...</p>
+</div>
+
+<header>
+    <h1 style="font-family: 'Orbitron';">GIANT ADMIN PANEL</h1>
+    <p>لوحة التحكم في مقترحات العمالقة</p>
+</header>
+
+<div class="stats-container">
+    <div class="stat-card"><h3 id="totalCount">0</h3><p>إجمالي الرسائل</p></div>
+    <div class="stat-card"><h3 id="newCount" style="color: var(--success);">0</h3><p>رسائل جديدة</p></div>
+</div>
+
+<main id="adminContent">
+    <div class="no-data">جاري جلب الرسائل...</div>
+</main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, onValue, update, remove } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+        authDomain: "ylearn-fe1fa.firebaseapp.com",
+        databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+        projectId: "ylearn-fe1fa",
+        storageBucket: "ylearn-fe1fa.firebasestorage.app",
+        messagingSenderId: "1092852055944",
+        appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    const ADMIN_UID = "lSpi591awfQMcRFU62CAM3108Hu1"; // الـ UID المسموح له بالدخول
+    const authOverlay = document.getElementById('authOverlay');
+    const adminContent = document.getElementById('adminContent');
+
+    // 1. نظام الحماية الصارم (فحص الـ UID)
+    onAuthStateChanged(auth, (user) => {
+        if (user && user.uid === ADMIN_UID) {
+            // المستخدم هو الأدمن الصحيح
+            authOverlay.style.display = 'none';
+            loadMessages();
+        } else {
+            // مستخدم غريب أو غير مسجل
+            document.getElementById('authText').innerHTML = "<span style='color:red;'>⚠️ غير مسموح لك بالوصول!</span>";
+            setTimeout(() => {
+                window.location.href = "login.html"; 
+            }, 1500);
+        }
+    });
+
+    // 2. تحميل الرسائل
+    function loadMessages() {
+        onValue(ref(db, 'advice'), (snapshot) => {
+            adminContent.innerHTML = '';
+            if (snapshot.exists()) {
+                const messages = snapshot.val();
+                const keys = Object.keys(messages).reverse();
+                let total = 0, newMsgs = 0;
+
+                keys.forEach(key => {
+                    const msg = messages[key];
+                    total++;
+                    if (msg.status === 'pending') newMsgs++;
+
+                    const card = document.createElement('div');
+                    card.className = `message-card ${msg.status === 'pending' ? 'new' : ''}`;
+                    card.innerHTML = `
+                        <button class="btn-delete" onclick="deleteMsg('${key}')">حذف 🗑️</button>
+                        <span class="badge ${msg.type === 'problem' ? 'badge-problem' : 'badge-suggestion'}">
+                            ${msg.type === 'problem' ? '⚠️ مشكلة' : '💡 مقترح'}
+                        </span>
+                        <h2 style="margin: 10px 0;">${msg.title || 'بدون عنوان'}</h2>
+                        <div style="font-size: 0.9rem; color: #aaa; margin-bottom: 10px;">
+                            👤 ${msg.email} | 📅 ${msg.timestamp}
+                        </div>
+                        <div class="msg-body">${msg.description}</div>
+                        ${msg.reply ? `<div class="msg-body" style="border-right: 3px solid var(--success); background: #061b11;"><strong>ردك:</strong> ${msg.reply}</div>` : ''}
+                        <div class="reply-area">
+                            <textarea id="replyText_${key}" placeholder="اكتب ردك للعملاق..."></textarea>
+                            <button class="btn-reply" onclick="sendReply('${key}')">رد</button>
+                        </div>
+                        <button class="btn-seen" onclick="markAsSeen('${key}')" ${msg.status === 'seen' ? 'disabled style="opacity:0.4"' : ''}>
+                            ${msg.status === 'seen' ? '✔ شوهدت' : 'تحديد كمقروء'}
+                        </button>
+                    `;
+                    adminContent.appendChild(card);
+                });
+                document.getElementById('totalCount').innerText = total;
+                document.getElementById('newCount').innerText = newMsgs;
+            } else {
+                adminContent.innerHTML = '<div class="no-data">لا توجد رسائل حالياً.</div>';
+            }
+        });
+    }
+
+    // 3. الدوال العامة
+    window.sendReply = async (key) => {
+        const replyText = document.getElementById(`replyText_${key}`).value;
+        if (!replyText.trim()) return alert("اكتب الرد أولاً!");
+        try {
+            await update(ref(db, `advice/${key}`), { reply: replyText, status: 'seen' });
+            alert("تم إرسال الرد!");
+        } catch (e) { alert("خطأ في الاتصال بقاعدة البيانات"); }
+    };
+
+    window.markAsSeen = async (key) => {
+        try {
+            await update(ref(db, `advice/${key}`), { status: 'seen' });
+        } catch (e) { alert("خطأ!"); }
+    };
+
+    window.deleteMsg = async (key) => {
+        if(confirm("هل أنت متأكد من حذف هذه الرسالة نهائياً؟")) {
+            try { await remove(ref(db, `advice/${key}`)); } catch (e) { alert("خطأ!"); }
+        }
+    };
+</script>
+</body>
+</html>

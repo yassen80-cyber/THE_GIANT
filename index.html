@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE GIANT - منصة تعليمية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <link rel="canonical" href="https://thegiant10.com/">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Cairo', sans-serif;
+            background-color: #0b0f19;
+            color: #fff;
+            direction: rtl;
+            overflow-x: hidden;
+            transition: background 0.4s, color 0.4s;
+            opacity: 0;
+            animation: fadeIn 1.2s ease-in forwards;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        header {
+            background-color: #0b0f19;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .logo img {
+            width: 45px;
+            height: 45px;
+        }
+
+        .logo h1 {
+            font-size: 1.6rem;
+            background: linear-gradient(90deg, #00b2ff, #7ee8fa, #00b2ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-family: 'Orbitron', sans-serif;
+            margin: 0;
+            font-weight: 800;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .logo h1::after, h2::after, .feature h3::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            to { left: 100%; }
+        }
+
+        .logo span {
+            color: #ffffff;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            margin-left: 4px;
+        }
+
+        .menu-icon {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #fff;
+            transition: transform 0.3s ease, color 0.3s;
+            z-index: 1001;
+        }
+
+        .menu-icon.open {
+            transform: rotate(90deg);
+            color: #00b2ff;
+        }
+
+        .menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            background-color: #111827;
+            width: 260px;
+            height: 100%;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 5rem;
+            transition: right 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 999;
+            border-left: 2px solid #00b2ff;
+        }
+
+        .menu.active { right: 0; }
+
+        .menu a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 1.1rem;
+            margin: 1rem 0;
+            background-color: #00b2ff;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+            width: 80%;
+            text-align: center;
+        }
+
+        .menu a:hover {
+            background-color: #008bcc;
+            transform: scale(1.05);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .toggle-theme {
+            background: #1e2636;
+            border: none;
+            border-radius: 25px;
+            width: 55px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-theme span {
+            font-size: 1.1rem;
+            color: #ccc;
+        }
+
+        main {
+            text-align: center;
+            padding: 4rem 1.5rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #00b2ff;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        p {
+            font-size: 1.2rem;
+            color: #ddd;
+            margin-bottom: 2rem;
+        }
+
+        .quote-box {
+            background: linear-gradient(145deg, #111827, #0d1320);
+            color: #00b2ff;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 15px;
+            padding: 2rem 1.5rem;
+            margin-top: 2.5rem;
+            line-height: 1.8;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            transition: transform 0.3s;
+        }
+
+        .quote-box:hover { transform: scale(1.03); }
+
+        .features {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature {
+            background: #111827;
+            padding: 2rem;
+            border-radius: 15px;
+            width: 200px;
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        .feature:hover {
+            transform: translateY(-10px);
+            background: #0d1320;
+        }
+
+        .feature img { width: 50px; margin-bottom: 1rem; }
+
+        .feature h3 {
+            margin: 0.5rem 0;
+            color: #00b2ff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature p { color: #ccc; font-size: 1rem; }
+
+        .section {
+            padding: 5rem 1.5rem;
+            margin-top: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* تصميم ركن المختبر العلمي الجديد */
+        .science-lab {
+            background: linear-gradient(160deg, #0f172a, #1e1b4b);
+            border: 2px solid #7ee8fa50;
+            padding: 5rem 1.5rem;
+            margin-top: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 25px rgba(0, 178, 255, 0.2);
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+            display: none; 
+        }
+
+        .lab-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+        }
+
+        .lab-card {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: right;
+            border: 1px solid #00b2ff30;
+            transition: 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .lab-card::before {
+            content: '🔬';
+            position: absolute;
+            left: -10px;
+            top: -10px;
+            font-size: 3rem;
+            opacity: 0.1;
+        }
+
+        .lab-card:hover {
+            border-color: #00b2ff;
+            transform: translateY(-5px);
+            background: #111827;
+        }
+
+        .lab-card h4 { color: #7ee8fa; margin-bottom: 0.5rem; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+        .lab-card p { color: #cbd5e1; font-size: 0.95rem; margin-bottom: 0; line-height: 1.6; }
+
+        .why-us {
+            background: linear-gradient(160deg, #111827, #0d1320);
+            border: 1px solid #00b2ff50;
+        }
+
+        .why-us-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            text-align: right;
+            margin-top: 3rem;
+        }
+
+        .reason {
+            background: #0b0f19;
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-right: 4px solid #00b2ff;
+            transition: all 0.3s;
+        }
+
+        .reason:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 0 15px #00b2ff50;
+        }
+
+        .reason h4 {
+            color: #7ee8fa;
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        .reason p {
+            color: #ccc;
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+
+        .support {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #25D366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            padding: 0.8rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+        }
+
+        .support img { width: 35px; height: 35px; }
+        .support:hover { transform: scale(1.1); }
+
+        #chatbot-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background-color: #00b2ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 1100;
+            transition: all 0.3s;
+        }
+
+        #chatbot-container:hover { transform: scale(1.1); }
+        #chatbot-icon { color: white; font-size: 2rem; }
+
+        footer {
+            background-color: #0b0f19;
+            color: #999;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.9rem;
+            margin-top: 3rem;
+        }
+
+        footer strong {
+            display: block;
+            color: #00b2ff;
+            margin-top: 0.5rem;
+            font-weight: 700;
+        }
+
+        .footer-links {
+            margin: 1rem 0;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #7ee8fa;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover { color: #00b2ff; }
+
+        body.light { background-color: #f5f5f5; color: #111; }
+        body.light header { background-color: #fff; }
+        body.light .menu { background-color: #fff; }
+        body.light .feature { background: #fff; }
+        body.light .quote-box { background: #e8f4ff; color: #005b8f; }
+        body.light .logo span { color: #000; }
+        body.light .why-us { background: #e8f4ff; }
+        body.light .science-lab { background: #f0f7ff; border-color: #00b2ff; }
+        body.light .lab-card { background: #fff; border-color: #ddd; }
+        body.light .lab-card p { color: #444; }
+        body.light .reason { background: #fff; border-right: 4px solid #005b8f; }
+        body.light .reason h4 { color: #005b8f; }
+        body.light .support { background-color: #00a845; }
+        body.light #chatbot-container { background-color: #005b8f; }
+
+        @media (max-width: 768px) {
+            h2 { font-size: 1.6rem; }
+            p { font-size: 1rem; }
+            .quote-box { font-size: 1.1rem; }
+            .features { flex-direction: column; align-items: center; }
+            .support { left: 10px; width: 50px; height: 50px; }
+            #chatbot-container { right: 10px; width: 50px; height: 50px; }
+        }
+        
+        .powered{
+            margin-top:1rem;
+            font-size:0.9rem;
+            letter-spacing:1px;
+            color:#aaa;
+        }
+
+        .powered .name{
+            text-decoration:none;
+            font-weight:700;
+            margin:0 4px;
+            transition:all 0.3s ease;
+        }
+
+        .powered .yassen{
+            color:#00b2ff;
+            text-shadow:0 0 6px rgba(0,178,255,0.6);
+        }
+
+        .powered .youssef{
+            color:#7ee8fa;
+            text-shadow:0 0 6px rgba(126,232,250,0.6);
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="menu-icon" id="menuToggle">☰</div>
+    <div class="logo">
+        <img src="logo.png" alt="شعار THE GIANT">
+        <h1><span>منصة</span> THE GIANT</h1>
+    </div>
+    <div class="actions">
+        <button class="toggle-theme" id="themeToggle">
+            <span>🌙</span>
+            <span>☀️</span>
+        </button>
+    </div>
+</header>
+<div class="menu" id="sideMenu">
+    </div>
+<main>
+    <h2>منصة THE GIANT</h2>
+    <p id="heroText">منصة متكاملة بها كل ما يحتاجه الطالب ليتفوق ويصل لأقصى إمكانياته الأكاديمية.</p>
+    <div class="quote-box">
+        أنت المسؤول عن السعي والمحاولة وليس النتيجة يا صديقي
+    </div>
+    <div class="features">
+        </div>
+
+    <section class="section why-us" id="why-us-section">
+        <h2>لماذا تختار منصة THE GIANT؟</h2>
+        <p>رحلة التفوق تبدأ باختيار الشريك الأفضل. نحن نجمع بين التكنولوجيا والخبرة لضمان نجاحك.</p>
+        <div class="why-us-list">
+            <div class="reason">
+                <h4>محتوى حصري ومُحدّث</h4>
+                <p>مناهجنا يتم تطويرها باستمرار لتواكب أحدث المعايير التعليمية.</p>
+            </div>
+            <div class="reason">
+                <h4>دعم فني وشخصي</h4>
+                <p>فريق دعم متواجد للإجابة على استفساراتك وحل مشكلاتك الفنية والأكاديمية.</p>
+            </div>
+            <div class="reason">
+                <h4>بيئة تعلم محفزة</h4>
+                <p>تصميم مبتكر وأدوات تفاعلية لجعل الدراسة ممتعة وغير مملة.</p>
+            </div>
+            <div class="reason">
+                <h4>أسعار تنافسية</h4>
+                <p>أفضل قيمة تعليمية بأقل التكاليف، لأن هدفنا هو العلم والنجاح.</p>
+            </div>
+        </div>
+    </section>
+
+   <section class="section science-lab" id="fun-zone-section">
+    <h2>🔬 مختبر العمالقة للاكتشاف العلمي</h2>
+    <p>وسع آفاقك بمعلومات علمية مدهشة (اضغط على الكروت لتغيير المعلومة)</p>
+    <div class="lab-cards">
+        <div class="lab-card" id="brain-card">
+            <h4 id="brain-title">⚡ طاقة العقل المذهلة</h4>
+            <p id="brain-text">انقر لاكتشاف معلومة مدهشة عن عقلك..</p>
+        </div>
+        <div class="lab-card" id="space-card">
+            <h4 id="space-title">🌌 أسرار الفيزياء والكون</h4>
+            <p id="space-text">انقر لاستكشاف لغز كوني جديد..</p>
+        </div>
+        <div class="lab-card" id="study-card">
+            <h4 id="study-title">🧠 كيمياء الذاكرة والتعلم</h4>
+            <p id="study-text">انقر لتعرف سر التذكر الدائم..</p>
+        </div>
+    </div>
+</section>
+</main>
+
+<button class="support" onclick="window.open('https://wa.me/201221015966?text=مرحبًا، أريد دعمًا فنيًا من منصة THE GIANT', '_blank')">
+    <img src="https://img.icons8.com/color/48/000000/whatsapp.png" alt="واتساب">
+</button>
+
+<div id="chatbot-container" onclick="window.location.href='bot.html'">
+    <div id="chatbot-icon">🤖</div>
+</div>
+
+<footer>
+    <div class="footer-links">
+        <a href="terms.html">⚖️ الشروط والأحكام</a>
+        <span style="color: #374151;">|</span>
+        <a href="privacy.html">🔒 سياسة الخصوصية</a>
+    </div>
+    
+    <div style="margin: 1rem 0; color: #ccc;">
+        &copy; 2025 <span style="color: #00b2ff; font-weight: bold;">THE GIANT</span>. جميع الحقوق محفوظة.
+        <strong style="font-size: 0.85rem; opacity: 0.8;">نحو تجربة تعليمية رائدة وذكية</strong>
+    </div>
+
+    <div class="powered">
+        DEVELOPED BY 
+        <a href="https://www.facebook.com/share/1D2QDzgpPA/" target="_blank" class="name yassen">YASSEN</a> & 
+        <a href="https://www.facebook.com/share/17s1cpSRPJ/" target="_blank" class="name youssef">YOUSSEF</a>
+    </div>
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+        authDomain: "ylearn-fe1fa.firebaseapp.com",
+        databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+        projectId: "ylearn-fe1fa",
+        storageBucket: "ylearn-fe1fa.firebasestorage.app",
+        messagingSenderId: "1092852055944",
+        appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const menuToggle = document.getElementById('menuToggle');
+    const sideMenu = document.getElementById('sideMenu');
+    const themeToggle = document.getElementById('themeToggle');
+    const body = document.body;
+
+    menuToggle.addEventListener('click', () => {
+        sideMenu.classList.toggle('active');
+        menuToggle.classList.toggle('open');
+        menuToggle.textContent = sideMenu.classList.contains('active') ? '✖' : '☰';
+    });
+
+    themeToggle.addEventListener('click', () => {
+        body.classList.toggle('light');
+        localStorage.setItem('theme', body.classList.contains('light') ? 'light' : 'dark');
+    });
+
+    if (localStorage.getItem('theme') === 'light') body.classList.add('light');
+
+    const brainFacts = [
+        "الدماغ البشري يولد طاقة كهربائية تكفي لإضاءة مصباح صغير (20 وات).",
+        "عقلك يعالج الصور التي تراها العين في أقل من 13 مللي ثانية.",
+        "يوجد حوالي 86 مليار خلية عصبية في دماغك، تعمل معاً كأعقد جهاز في الكون.",
+        "عندما تتعلم شيئاً جديداً، يتغير هيكل دماغك الفعلي وتنشأ روابط عصبية جديدة.",
+        "المخ لا يشعر بالألم أبداً؛ لأنه لا يحتوي على مستقبلات للألم رغم أنه يحلله."
+    ];
+
+    const spaceFacts = [
+        "لو ضغطنا الأرض لتصبح بحجم كرة التنس، فستتحول إلى ثقب أسود!",
+        "يوماً واحداً على كوكب الزهرة أطول من سنة كاملة على كوكب الأرض.",
+        "بدلة الفضاء التابعة لناسا تكلف حوالي 12 مليون دولار!",
+        "هناك ألماس يتساقط كالأمطار على كوكبي زحل والمشتري.",
+        "الكون يتوسع باستمرار وبسرعة تفوق سرعة الضوء في الأطراف البعيدة."
+    ];
+
+    const studyFacts = [
+        "النوم مباشرة بعد المذاكرة يساعد في تثبيت المعلومات بنسبة 40%.",
+        "كتابة الملاحظات باليد أقوى في التذكر من كتابتها على الكمبيوتر.",
+        "شرب الماء بانتظام أثناء المذاكرة يحسن التركيز بنسبة 15%.",
+        "تدريس المعلومة لغيرك هو أسرع طريقة لتثبيتها في عقلك (أسلوب فاينمان).",
+        "العقل البشري يميل لتذكر المهام غير المكتملة أكثر من المكتملة (تأثير زيجارنيك)."
+    ];
+
+    let currentIndices = { brain: 0, space: 0, study: 0 };
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    shuffle(brainFacts); shuffle(spaceFacts); shuffle(studyFacts);
+
+    function updateFact(type, array, textId) {
+        const element = document.getElementById(textId);
+        if (element) {
+            element.style.opacity = 0;
+            setTimeout(() => {
+                element.innerText = array[currentIndices[type]];
+                element.style.opacity = 1;
+                currentIndices[type]++;
+                if (currentIndices[type] >= array.length) { currentIndices[type] = 0; shuffle(array); }
+            }, 200);
+        }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        const mainFeatures = document.querySelector('.features');
+        const whyUsSection = document.getElementById('why-us-section');
+        const funZoneSection = document.getElementById('fun-zone-section');
+        const heroText = document.getElementById('heroText');
+        
+        if (user) {
+            whyUsSection.style.display = 'none';
+            funZoneSection.style.display = 'block';
+            heroText.innerHTML = "أهلاً بك يا بطل في منطقتك الخاصة. استمتع برحلة التعلم والاكتشاف العلمي!";
+
+            const bCard = document.getElementById('brain-card');
+            const sCard = document.getElementById('space-card');
+            const tCard = document.getElementById('study-card');
+            
+            if(bCard) bCard.onclick = () => updateFact('brain', brainFacts, 'brain-text');
+            if(sCard) sCard.onclick = () => updateFact('space', spaceFacts, 'space-text');
+            if(tCard) tCard.onclick = () => updateFact('study', studyFacts, 'study-text');
+
+            sideMenu.innerHTML = `<div style="padding: 1rem; text-align: center; border-bottom: 1px solid #00b2ff30; width: 100%; margin-bottom: 1rem;"><small style="color: #7ee8fa;">أهلاً بك يا عملاق</small></div><a href="myprofile.html">👤 صفحتي الخاصة</a><a href="dashboard.html">📚 لوحة الكورسات</a><a href="freevid.html">🎥 فيديوهات مجانية</a><a href="taqeem.html">⭐ تقييم المنصة</a><a href="advice.html">💡تقديم مقترح أو مشكلة</a><a href="#" id="logoutBtn" style="background-color: #ef4444;">🚪 تسجيل الخروج</a>`;
+
+            mainFeatures.innerHTML = `<div class="feature" onclick="window.location.href='dashboard.html'" style="cursor:pointer"><img src="https://img.icons8.com/fluency/48/000000/learning.png"><h3>استكمل دروسك</h3><p>القمة في انتظارك، اضغط للعودة لدروسك فوراً.</p></div><div class="feature" onclick="window.location.href='myprofile.html'" style="cursor:pointer"><img src="https://img.icons8.com/fluency/48/000000/medal.png"><h3>لوحة الشرف</h3><p>شاهد ترتيبك العالمي ونتائج امتحاناتك الأخيرة.</p></div><div class="feature" onclick="window.location.href='bot.html'" style="cursor:pointer"><img src="https://img.icons8.com/fluency/48/000000/bot.png"><h3>المساعد الذكي</h3><p>فضفض أو اسأل عن أي شيء، أنا هنا لمساعدتك.</p></div>`;
+
+            document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                e.preventDefault();
+                if(confirm("هل تريد تسجيل الخروج؟")) signOut(auth).then(() => window.location.reload());
+            });
+        } else {
+            whyUsSection.style.display = 'block';
+            funZoneSection.style.display = 'none';
+            sideMenu.innerHTML = `<a href="login.html">تسجيل الدخول</a><a href="register.html">إنشاء حساب</a><a href="we.html">من نحن</a><a href="tawasal.html">تواصل معنا</a><a href="taqeem.html">قيّمنا</a>`;
+            mainFeatures.innerHTML = `<div class="feature"><img src="https://img.icons8.com/fluency/48/000000/classroom.png"><h3>كورسات متكاملة</h3><p>تعلم جميع المواد بطريقة تفاعلية ومبسطة تركز على الفهم.</p></div><div class="feature"><img src="https://img.icons8.com/fluency/48/000000/test-passed.png"><h3>اختبارات تفاعلية</h3><p>قيّم نفسك باستمرار لتحقيق أفضل النتائج فورياً.</p></div><div class="feature"><img src="https://img.icons8.com/fluency/48/000000/graph.png"><h3>متابعة الأداء</h3><p>راقب تقدمك واحصل على تقارير مفصلة لنقاط قوتك.</p></div>`;
+        }
+    });
+</script>
+</body>
+</html>

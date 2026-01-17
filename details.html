@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تفاصيل الطلاب | THE GIANT</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --bg: #0b0f19;
+    --card: #111827;
+    --accent: #00b2ff;
+    --muted: #ccc;
+    --success: #00c851;
+    --danger: #ff4444;
+}
+
+body {
+    font-family: "Cairo", sans-serif;
+    background: var(--bg);
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: var(--accent);
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    padding: 10px 18px;
+    background: var(--accent);
+    color: #000;
+    font-weight: bold;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: 0.25s;
+}
+
+.back-btn:hover {
+    background: #0095e5;
+}
+
+.search-box {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.search-box input {
+    width: 70%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 17px;
+    outline: none;
+    background: #1a2332;
+    color: #fff;
+    transition: .3s;
+}
+
+.search-box input:focus {
+    box-shadow: 0 0 10px var(--accent);
+}
+
+.students-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+}
+
+.student-card {
+    background: var(--card);
+    padding: 18px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: 0.25s;
+    border-right: 4px solid var(--accent);
+    box-shadow: 0 5px 18px rgba(0,0,0,0.4);
+}
+
+.student-card:hover {
+    transform: translateY(-6px);
+    background: #131c2a;
+}
+
+.student-name {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: var(--accent);
+}
+
+.student-info {
+    color: var(--muted);
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+.courses-box {
+    background: #0e1724;
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 10px;
+    color: #fff;
+    font-size: 15px;
+}
+
+.status {
+    margin-top: 5px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+.yes { color: var(--success); font-weight: 700; }
+.no { color: var(--danger); }
+
+.courses-box ul {
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.courses-box ul li {
+    margin-bottom: 6px;
+}
+
+.courses-box ul::-webkit-scrollbar {
+    width: 6px;
+}
+.courses-box ul::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 6px;
+}
+</style>
+</head>
+<body>
+
+<h1>📘 جميع تفاصيل الطلاب</h1>
+<a href="admin.html" class="back-btn">⬅ العودة للوحة الأدمن</a>
+
+<div class="search-box">
+    <input type="text" id="searchInput" placeholder="🔍 ابحث باسم الطالب أو رقمه...">
+</div>
+
+<div class="students-container" id="studentsContainer"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+    authDomain: "ylearn-fe1fa.firebaseapp.com",
+    databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+    projectId: "ylearn-fe1fa",
+    storageBucket: "ylearn-fe1fa.appspot.com",
+    messagingSenderId: "1092852055944",
+    appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+const cont = document.getElementById("studentsContainer");
+let allStudents = [];
+
+// حماية الصفحة والتأكد من هوية الأدمن
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+    // التأكد من الـ UID الخاص بك كأدمن
+    if (user.uid !== "lSpi591awfQMcRFU62CAM3108Hu1") {
+        alert("🚫 لا تملك صلاحية لدخول هذه الصفحة");
+        window.location.href = "index.html";
+        return;
+    }
+    loadStudents();
+});
+
+async function loadStudents() {
+    try {
+        cont.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>⏳ جاري جلب بيانات الطلاب...</p>";
+        
+        // جلب البيانات الأساسية دفعة واحدة (Promise.all لتسريع العمل)
+        const [usersSnap, studentsSnap, coursesSnap, resultsSnap, homeworkSnap] = await Promise.all([
+            get(ref(db, "users")),
+            get(ref(db, "students")),
+            get(ref(db, "courses")),
+            get(ref(db, "results")),
+            get(ref(db, "homeworkResult"))
+        ]);
+
+        cont.innerHTML = "";
+        allStudents = [];
+
+        if (!usersSnap.exists()) {
+            cont.innerHTML = "<p style='text-align:center; grid-column: 1/-1;'>📭 لا يوجد طلاب مسجلين حالياً.</p>";
+            return;
+        }
+
+        const users = usersSnap.val();
+        const studentAccess = studentsSnap.exists() ? studentsSnap.val() : {};
+        const allCourses = coursesSnap.exists() ? coursesSnap.val() : {};
+        const allResults = resultsSnap.exists() ? resultsSnap.val() : {};
+        const allHomeworks = homeworkSnap.exists() ? homeworkSnap.val() : {};
+
+        for (const [uid, user] of Object.entries(users)) {
+            // تجاهل حساب الأدمن من القائمة إذا أردت
+            if (uid === "lSpi591awfQMcRFU62CAM3108Hu1") continue;
+
+            const purchased = studentAccess[uid]?.purchased || {};
+            const courseList = Object.keys(purchased).map(cid => {
+                const cname = allCourses[cid]?.name || "كورس غير موجود";
+                
+                // تحقق هل سلم الطالب نتيجة لهذا الكورس تحديداً؟
+                // ملاحظة: يعتمد هذا على هيكلة results لديك (هل هي results/uid/courseId أم results/uid/examId)
+                // سأبقيها ذكية لتبحث في النتائج التابعة للطالب
+                const examDone = allResults[uid] ? Object.values(allResults[uid]).some(r => r.courseId === cid || r.title?.includes(cname)) : false;
+                const hwDone = allHomeworks[uid]?.[cid] ? true : false;
+                
+                return { name: cname, examDone, hwDone };
+            });
+
+            const card = document.createElement("div");
+            card.className = "student-card";
+            card.onclick = () => window.location.href = `profile.html?id=${uid}`;
+
+            card.innerHTML = `
+                <div class="student-name">${user.fullName || "مستخدم جديد"}</div>
+                <div class="student-info">📞 الطالب: ${user.studentNumber || "غير مسجل"}</div>
+                <div class="student-info">👨‍👩‍👦 ولي الأمر: ${user.parentNumber || "غير مسجل"}</div>
+                <div class="student-info">🎓 المرحلة: ${user.grade || "-"}</div>
+                <div class="courses-box">
+                    <strong>📘 الكورسات المفتوحة: (${courseList.length})</strong>
+                    <ul>
+                        ${
+                            courseList.length > 0
+                            ? courseList.map(c => `
+                                <li>
+                                    ${c.name} <br>
+                                    <small>الامتحان: ${c.examDone ? "<span class='yes'>✔ تم</span>" : "<span class='no'>❌ لا</span>"}</small> | 
+                                    <small>الواجب: ${c.hwDone ? "<span class='yes'>✔ تم</span>" : "<span class='no'>❌ لا</span>"}</small>
+                                </li>`).join("")
+                            : "<li>لا يوجد كورسات مشتركة</li>"
+                        }
+                    </ul>
+                </div>
+            `;
+
+            cont.appendChild(card);
+            allStudents.push({
+                el: card,
+                name: (user.fullName || "").toLowerCase(),
+                num: user.studentNumber || ""
+            });
+        }
+    } catch (err) {
+        console.error("Critical Error:", err);
+        cont.innerHTML = "<p style='color:red;text-align:center; grid-column: 1/-1;'>حدث خطأ فني أثناء جلب البيانات.</p>";
+    }
+}
+
+// بحث سريع متقدم
+document.getElementById("searchInput").addEventListener("input", (e) => {
+    const val = e.target.value.toLowerCase().trim();
+    allStudents.forEach(s => {
+        const isMatch = s.name.includes(val) || s.num.includes(val);
+        s.el.style.display = isMatch ? "block" : "none";
+    });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>    
+<html lang="ar" dir="rtl">    
+<head>    
+  <meta charset="UTF-8" />    
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />    
+  <title>تسجيل الدخول - منصة THE GIANT</title>    
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <style>    
+    :root {
+      --accent: #00b2ff;
+      --bg: #0b0f19;
+      --card: #111827;
+      --input: #1e2636;
+      --text: #ffffff;
+    }
+    body {    
+      background-color: var(--bg);    
+      color: var(--text);    
+      font-family: "Cairo", sans-serif;    
+      margin: 0;    
+      padding: 0;    
+      display: flex;    
+      justify-content: center;    
+      align-items: center;    
+      height: 100vh;    
+      overflow: hidden;
+    }    
+    .login-box {    
+      background-color: var(--card);    
+      padding: 2rem;    
+      border-radius: 20px;    
+      width: 90%;    
+      max-width: 400px;    
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);    
+      border: 1px solid rgba(255,255,255,0.05);
+    }    
+    h2 {    
+      text-align: center;    
+      color: var(--accent);    
+      margin-bottom: 1.5rem;    
+      font-weight: 700;
+    }    
+    label {    
+      display: block;    
+      margin-bottom: 0.5rem;    
+      color: #94a3b8;    
+      font-size: 0.9rem;
+    }    
+    .password-container {    
+      position: relative;    
+    }    
+    input {    
+      width: 100%;    
+      padding: 0.8rem;    
+      margin-bottom: 1rem;    
+      border: 1px solid rgba(255,255,255,0.1);    
+      border-radius: 10px;    
+      background: var(--input);    
+      color: #fff;    
+      font-size: 1rem;    
+      box-sizing: border-box;
+      transition: 0.3s;
+    }    
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(0, 178, 255, 0.2);
+    }
+    .toggle-password {    
+      position: absolute;    
+      top: 22px; /* تم الضبط ليتناسب مع padding المدخل */
+      left: 12px;    
+      transform: translateY(-50%);    
+      cursor: pointer;    
+      color: #64748b;    
+      font-size: 1.2rem;    
+      user-select: none;    
+      z-index: 10;
+    }    
+    button {    
+      width: 100%;    
+      padding: 0.9rem;    
+      background: var(--accent);    
+      border: none;    
+      border-radius: 10px;    
+      color: #fff;    
+      font-size: 1rem;    
+      font-weight: bold;
+      cursor: pointer;    
+      margin-top: 0.5rem;
+      transition: 0.3s;
+    }    
+    button:hover {    
+      background: #0090cc;    
+      transform: translateY(-2px);
+    }    
+    .btn-secondary {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      margin-top: 10px;
+    }
+    .btn-secondary:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    p {    
+      text-align: center;    
+      margin-top: 1.5rem;    
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }    
+    a {    
+      color: var(--accent);    
+      text-decoration: none;    
+      font-weight: bold;
+    }    
+    .small {    
+      display: block;
+      text-align: left;
+      margin-bottom: 1rem;
+    }    
+
+    /* ستايل التنبيه المخصص */
+    #customAlert {    
+      display: none;    
+      position: fixed;    
+      top: 50%;    
+      left: 50%;    
+      transform: translate(-50%, -50%);    
+      background: #1e293b;    
+      color: #fff;    
+      padding: 30px;    
+      border-radius: 20px;    
+      text-align: center;    
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);    
+      width: 85%;    
+      max-width: 350px;    
+      z-index: 9999;    
+      border: 1px solid var(--accent);
+    }    
+    #customAlert h3 { margin: 0 0 10px; color: var(--accent); }    
+    #customAlert button { width: auto; padding: 8px 30px; background: var(--accent); }
+  </style>    
+</head>    
+<body>    
+
+  <div class="login-box">    
+    <h2>تسجيل الدخول</h2>    
+    <form id="loginForm">    
+      <label>البريد الإلكتروني</label>    
+      <input type="email" id="email" placeholder="example@email.com" required />    
+      
+      <label>كلمة المرور</label>    
+      <div class="password-container">    
+        <input type="password" id="password" placeholder="********" required />    
+        <span id="togglePassword" class="toggle-password">👁️</span>    
+      </div>    
+
+      <div class="small">
+        <a href="reset.html">نسيت كلمة المرور؟</a>
+      </div>
+
+      <button type="submit" id="submitBtn">تسجيل الدخول</button>    
+      <button type="button" class="btn-secondary" onclick="window.location.href='index.html'">🏠 العودة للرئيسية</button>    
+    </form>    
+    <p>ليس لديك حساب؟ <a href="register.html">إنشاء حساب جديد</a></p>    
+  </div>    
+
+  <div id="customAlert">    
+    <h3 id="alertTitle">THE GIANT 🚀</h3>    
+    <p id="alertMessage"></p>    
+    <button onclick="closeAlert()">فهمت</button>    
+  </div>    
+
+<script type="module">    
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";    
+    import { getAuth, signInWithEmailAndPassword, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";    
+    import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";    
+
+    const firebaseConfig = {    
+      apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",    
+      authDomain: "ylearn-fe1fa.firebaseapp.com",    
+      databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",    
+      projectId: "ylearn-fe1fa",    
+      storageBucket: "ylearn-fe1fa.appspot.com",    
+      messagingSenderId: "1092852055944",    
+      appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"    
+    };    
+
+    const app = initializeApp(firebaseConfig);    
+    const auth = getAuth(app);    
+    const database = getDatabase(app);    
+
+    const passwordInput = document.getElementById("password");    
+
+    // إظهار وإخفاء كلمة المرور
+    document.getElementById('togglePassword').onclick = function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      this.textContent = type === 'password' ? '👁️' : '🙈';
+    };
+
+    // وظائف التنبيه
+    window.showAlert = function (msg, title = "THE GIANT 🚀") {    
+      document.getElementById("alertTitle").innerText = title;    
+      document.getElementById("alertMessage").innerText = msg;    
+      document.getElementById("customAlert").style.display = "block";    
+    };    
+
+    window.closeAlert = function () {    
+      document.getElementById("customAlert").style.display = "none";    
+    };    
+
+    // منطق تسجيل الدخول
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.innerText = "جاري التحقق...";
+
+      const email = document.getElementById("email").value.trim();
+      const password = passwordInput.value.trim();
+
+      try {
+        // تحديد استمرار الجلسة حتى بعد إغلاق المتصفح
+        await setPersistence(auth, browserLocalPersistence);
+        
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // نظام الجلسة الموحدة (Single Device Login)
+        const sessionId = Math.random().toString(36).substring(2, 15) + "_" + Date.now();
+        await update(ref(database, `users/${user.uid}`), { currentSession: sessionId });
+        localStorage.setItem('user_session_id', sessionId);
+
+        // التحقق إذا كان أدمن
+        if (user.uid === "lSpi591awfQMcRFU62CAM3108Hu1") {
+          showAlert("مرحباً بك أيها العملاق! جاري دخول لوحة التحكم...", "دخول الإدارة 🛠️");
+          setTimeout(() => { window.location.href = "admin.html"; }, 1500);
+          return;
+        }
+
+        // جلب اسم الطالب للترحيب
+        const userSnap = await get(ref(database, `users/${user.uid}`));
+        const name = userSnap.exists() ? (userSnap.val().fullName || "يا بطل") : "يا بطل";
+
+        showAlert(`أهلاً بك مجدداً ${name}!`, "تم الدخول بنجاح ✅");
+        setTimeout(() => { window.location.href = "index.html"; }, 1500);
+
+      } catch (error) {
+        btn.disabled = false;
+        btn.innerText = "تسجيل الدخول";
+        let message = "البيانات المدخلة غير صحيحة.";
+        if (error.code === "auth/too-many-requests") message = "تم حظر المحاولات مؤقتاً لكثرة الأخطاء. حاول لاحقاً.";
+        showAlert(message, "خطأ ⚠️");
+      }
+    });
+</script>
+</body>    
+</html>

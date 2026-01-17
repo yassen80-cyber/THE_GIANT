@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>📘 محتوى الكورس - منصة THE GIANT</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #00b2ff;
+    --bg: #03070d;
+    --card: #0f172a;
+    --glass: rgba(30, 41, 59, 0.7);
+    --border: rgba(255, 255, 255, 0.08);
+  }
+  body {margin:0;font-family:"Cairo",sans-serif;background:var(--bg);color:#fff;min-height:100vh;background-image: radial-gradient(circle at top right, rgba(0, 178, 255, 0.05), transparent);}
+  header {background: rgba(2, 6, 12, 0.9); backdrop-filter: blur(12px); padding: 10px 5%; display:flex; justify-content:space-between; align-items:center; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border);}
+  header h1 {background: linear-gradient(135deg, #00b2ff, #0066cc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin:0; font-size:1.2rem; font-weight: 800;}
+  
+  button {border:none;border-radius:10px;cursor:pointer;transition:0.3s; font-family: 'Cairo';}
+  button.back {background: rgba(255,255,255,0.05); color:#fff; padding:0.6rem 1.2rem; border: 1px solid var(--border);}
+  
+  .content {padding:1.5rem; max-width:900px; margin:auto;}
+  .section-title { margin: 2rem 0 1rem; display: flex; align-items: center; gap: 10px; font-size: 1.3rem; border-right: 4px solid var(--primary); padding-right: 15px; }
+  
+  .card { background: var(--glass); border: 1px solid var(--border); padding: 1.2rem; border-radius: 18px; margin: 1rem 0; transition: 0.3s; }
+  .card:hover { border-color: var(--primary); transform: translateY(-3px); }
+  .card h2 {color:var(--primary); margin: 0 0 0.5rem; font-size: 1.1rem; font-weight: 700;}
+  .card h4 {margin:0.4rem 0;color:#94a3b8; font-weight: 400; font-size: 0.9rem;}
+  .card p { font-size: 0.85rem; color: #64748b; }
+  
+  .video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; margin-top: 1rem; background: #000; }
+  .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+  
+  .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1.2rem; }
+  .exam-btn { background: linear-gradient(135deg, #00b2ff, #0066cc); color: #000; padding: 0.7rem 1.4rem; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; justify-content: center; }
+  .exam-btn.disabled { background: #1e293b; color: #64748b; cursor: not-allowed; border: 1px solid var(--border); }
+  .score-btn { background: #059669; color: #fff; padding: 0.7rem 1.4rem; border-radius: 10px; font-weight: 700; text-decoration: none; font-size: 0.9rem; }
+  
+  #loader { text-align: center; padding: 50px; color: var(--primary); font-weight: 700; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>📘 محتوى الكورس</h1>
+    <button class="back">🏠 الرئيسية</button>
+  </header>
+
+  <div class="content">
+    <div id="contentArea"><div id="loader">⏳ جاري تأمين المحتوى...</div></div>
+  </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+  authDomain: "ylearn-fe1fa.firebaseapp.com",
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+  projectId: "ylearn-fe1fa",
+  storageBucket: "ylearn-fe1fa.firebasestorage.app",
+  messagingSenderId: "1092852055944",
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+const contentArea = document.getElementById("contentArea");
+
+const urlParams = new URLSearchParams(window.location.search);
+const selectedCourseId = urlParams.get("courseId") || localStorage.getItem("selectedCourseId");
+
+function fixYouTubeLink(url) {
+  if (!url) return "";
+  url = url.replace("m.youtube.com", "www.youtube.com");
+  let videoId = "";
+  if (url.includes("watch?v=")) {
+    videoId = url.split("watch?v=")[1].split("&")[0];
+  } else if (url.includes("youtu.be/")) {
+    videoId = url.split("youtu.be/")[1].split("?")[0];
+  } else if (url.includes("/embed/")) {
+    return url;
+  }
+  return `https://www.youtube.com/embed/${videoId}`;
+}
+
+async function getResult(itemId, userId) {
+  const resultSnap = await get(ref(db, `results/${userId}/${itemId}`));
+  return resultSnap.exists() ? resultSnap.val() : null;
+}
+
+async function getHomeworkResult(homeworkId, userId) {
+  const hwSnap = await get(ref(db, `homeworkResult/${userId}/${homeworkId}`));
+  return hwSnap.exists() ? hwSnap.val() : null;
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!selectedCourseId) {
+    contentArea.innerHTML = "<p style='text-align:center'>❌ لم يتم تحديد كورس.</p>";
+    return;
+  }
+
+  // 🛡️ التحقق من الاشتراك (التفعيل)
+  const purchaseSnap = await get(ref(db, `students/${user.uid}/purchased/${selectedCourseId}`));
+  if (!purchaseSnap.exists()) {
+    alert("عذراً! هذا الكورس غير مفعل لديك.");
+    window.location.href = "dashboard.html";
+    return;
+  }
+
+  const snap = await get(ref(db, `courses/${selectedCourseId}/content`));
+  if (!snap.exists()) {
+    contentArea.innerHTML = "<div class='card' style='text-align:center'> لا يوجد محتوى متاح حالياً لهذا الكورس.</div>";
+    return;
+  }
+
+  contentArea.innerHTML = "";
+  localStorage.setItem("selectedCourseId", selectedCourseId);
+  
+  const allContent = Object.entries(snap.val());
+  const lessons = allContent.filter(([_, item]) => item.type === "شرح");
+  const exams = allContent.filter(([_, item]) => item.type === "امتحان");
+  const homeworks = allContent.filter(([_, item]) => item.type === "واجب");
+
+  // 📚 قسم الشروحات
+  if (lessons.length) {
+    const h = document.createElement("div");
+    h.className = "section-title";
+    h.innerHTML = "<span>📚</span> قسم الشروحات";
+    contentArea.appendChild(h);
+    lessons.forEach(([id, item]) => {
+      const div = document.createElement("div");
+      div.className = "card";
+      const videoUrl = fixYouTubeLink(item.video);
+      div.innerHTML = `
+        <h2>📖 ${item.title}</h2>
+        ${item.note ? `<h4>${item.note}</h4>` : ""}
+        ${videoUrl ? `<div class="video-container"><iframe src="${videoUrl}" allowfullscreen></iframe></div>` : ""}
+      `;
+      contentArea.appendChild(div);
+    });
+  }
+
+  // ✅ التحقق هل الطالب حل كل الواجبات
+  let allHomeworksSolved = true;
+  for (const [id] of homeworks) {
+    const result = await getHomeworkResult(id, user.uid);
+    if (!result) {
+      allHomeworksSolved = false;
+      break;
+    }
+  }
+
+  // 🧩 قسم الامتحانات
+  if (exams.length) {
+    const h = document.createElement("div");
+    h.className = "section-title";
+    h.innerHTML = "<span>🧩</span> قسم الامتحانات";
+    contentArea.appendChild(h);
+    for (const [id, item] of exams) {
+      const div = document.createElement("div");
+      div.className = "card";
+      const result = await getResult(id, user.uid);
+      let buttonsHTML = "";
+
+      if (!allHomeworksSolved) {
+        buttonsHTML = `<button class="exam-btn disabled" disabled>⚠️ أكمل الواجبات أولاً</button>`;
+      } else if (result) {
+        buttonsHTML = `
+          <button class="exam-btn disabled" disabled>✅ تم الحل</button>
+          <button class="score-btn" onclick="alert('🎯 درجتك: ${result.score || 0} / ${result.total || 0}\\n⏱️ الوقت: ${result.timeTakenMin || 0} دقيقة')">📊 عرض الدرجة</button>
+        `;
+      } else {
+        buttonsHTML = `<a href="exam.html?examId=${id}&courseId=${selectedCourseId}" class="exam-btn">🚀 ابدأ الامتحان الآن</a>`;
+      }
+
+      div.innerHTML = `
+        <h2>📝 ${item.title}</h2>
+        ${item.desc ? `<h4>${item.desc}</h4>` : ""}
+        ${item.time ? `<p>⏱️ المدة المحددة: ${item.time} دقيقة</p>` : ""}
+        <div class="btn-group">${buttonsHTML}</div>
+      `;
+      contentArea.appendChild(div);
+    }
+  }
+
+  // 🏠 قسم الواجبات
+  if (homeworks.length) {
+    const h = document.createElement("div");
+    h.className = "section-title";
+    h.innerHTML = "<span>📘</span> قسم الواجبات";
+    contentArea.appendChild(h);
+    for (const [id, item] of homeworks) {
+      const div = document.createElement("div");
+      div.className = "card";
+      const result = await getHomeworkResult(id, user.uid);
+      let buttonsHTML = "";
+      if (result) {
+        buttonsHTML = `
+          <button class="exam-btn disabled" disabled>✅ تم الحل</button>
+          <button class="score-btn" onclick="alert('📊 الدرجة: ${result.percentage || 0}%\\n⏱️ الوقت: ${result.timeTakenMin || 0} دقيقة')">📊 عرض الدرجة</button>
+        `;
+      } else {
+        buttonsHTML = `<a href="wageb.html?homeworkId=${id}&courseId=${selectedCourseId}" class="exam-btn" onclick="localStorage.setItem('currentHomeworkId', '${id}')">✍️ حل الواجب</a>`;
+      }
+
+      div.innerHTML = `
+        <h2>📚 ${item.title}</h2>
+        ${item.desc ? `<h4>${item.desc}</h4>` : ""}
+        ${item.time ? `<p>⏱️ المدة المحددة: ${item.time} دقيقة</p>` : ""}
+        <div class="btn-group">${buttonsHTML}</div>
+      `;
+      contentArea.appendChild(div);
+    }
+  }
+});
+
+document.querySelector(".back").addEventListener("click", () => {
+  window.location.href = "dashboard.html";
+});
+</script>
+</body>
+</html>

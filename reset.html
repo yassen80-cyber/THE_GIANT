@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>استعادة كلمة المرور - THE GIANT</title>
+<style>
+  body {
+    background-color: #0b0f19;
+    color: #fff;
+    font-family: "Cairo", sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .reset-box {
+    background-color: #111827;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.4);
+  }
+  h2 {
+    text-align: center;
+    color: #00b2ff;
+    margin-bottom: 1.5rem;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ccc;
+  }
+  input {
+    width: 100%;
+    padding: 0.8rem;
+    margin-bottom: 1rem;
+    border: none;
+    border-radius: 8px;
+    background: #1e2636;
+    color: #fff;
+    font-size: 1rem;
+  }
+  button {
+    width: 100%;
+    padding: 0.8rem;
+    background: #00b2ff;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+  }
+  button:hover {
+    background: #0090cc;
+  }
+  p {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #bbb;
+  }
+  a {
+    color: #00b2ff;
+    text-decoration: none;
+  }
+  #customAlert {
+    display: none;
+    position: fixed;
+    top:50%;
+    left:50%;
+    transform: translate(-50%,-50%);
+    background:#111827;
+    color:#fff;
+    padding:25px;
+    border-radius:15px;
+    text-align:center;
+    box-shadow:0 0 20px rgba(0,178,255,0.6);
+    width:85%;
+    max-width:350px;
+    z-index:9999;
+  }
+  #customAlert h3 {
+    margin-top:0;
+    color:#00b2ff;
+    font-size:1.3rem;
+  }
+  #customAlert button {
+    margin-top:15px;
+    background:#00b2ff;
+    border:none;
+    color:#fff;
+    padding:8px 20px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  #customAlert button:hover {
+    background:#0090cc;
+  }
+  .instructions {
+    background: #1e2636;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #ccc;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="reset-box">
+  <h2>استعادة كلمة المرور</h2>
+
+  <div class="instructions">    
+    <strong>ملاحظة مهمة:</strong><br>    
+    بعد طلب إعادة تعيين كلمة المرور، تحقق من البريد الوارد. إذا لم تجد الرسالة، تحقق من مجلد <strong>Spam / البريد المزعج</strong> في Gmail:<br>    
+    1. افتح Gmail<br>    
+    2. اضغط على الثلاث خطوط أو زر "المزيد"<br>    
+    3. اختر <strong>Spam</strong><br>    
+    4. افتح الرسالة واضغط على الرابط لتغيير كلمة المرور<br>    
+    5. اتبع التعليمات لإعادة تعيين كلمة المرور<br>    
+  </div>
+
+  <form id="resetForm">
+    <label>البريد الإلكتروني</label>
+    <input type="email" id="email" placeholder="example@email.com" required>
+    <button type="submit">إرسال رابط إعادة التعيين</button>
+    <button type="button" id="homeBtn">🏠 الرجوع للرئيسية</button>
+  </form>
+</div>
+
+<div id="customAlert">
+  <h3 id="alertTitle">THE GIANT says 🚀</h3>
+  <p id="alertMessage"></p>
+  <button onclick="closeAlert()">تمام</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+
+// إعدادات Firebase الخاصة بك
+const firebaseConfig = {
+  apiKey: "AIzaSyDW80ZbwOB7QHHW76kSL9cqlzMoyPFZ7nI",
+  authDomain: "ylearn-fe1fa.firebaseapp.com",
+  databaseURL: "https://ylearn-fe1fa-default-rtdb.firebaseio.com",
+  projectId: "ylearn-fe1fa",
+  storageBucket: "ylearn-fe1fa.appspot.com",
+  messagingSenderId: "1092852055944",
+  appId: "1:1092852055944:web:85c3df7cf4c0cbcdca043d"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// --- وظائف التنبيه ---
+window.showAlert = function(msg, title="THE GIANT says 🚀") {
+  document.getElementById("alertTitle").innerText = title;
+  document.getElementById("alertMessage").innerText = msg;
+  document.getElementById("customAlert").style.display = "block";
+};
+
+window.closeAlert = function() {
+  document.getElementById("customAlert").style.display = "none";
+};
+
+document.getElementById("homeBtn").addEventListener("click", () => {
+  window.location.href = "index.html";
+});
+
+// --- معالجة إرسال النموذج ---
+document.getElementById("resetForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  
+  if (!email) {
+    showAlert("يرجى إدخال البريد الإلكتروني أولاً.");
+    return;
+  }
+
+  // إظهار حالة جاري الإرسال على الزر
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn.innerText;
+  submitBtn.disabled = true;
+  submitBtn.innerText = "جاري الإرسال...";
+
+  try {
+    // إرسال طلب إعادة التعيين مباشرة
+    await sendPasswordResetEmail(auth, email);
+    
+    showAlert("تم إرسال رابط إعادة تعيين كلمة المرور بنجاح! تفقد بريدك الوارد (والبريد المزعج Spam).", "تم الإرسال ✅");
+    
+    // تصفير الحقل بعد النجاح
+    document.getElementById("email").value = "";
+
+  } catch (error) {
+    console.error("Reset Error:", error.code);
+    let message = "حدث خطأ غير متوقع، حاول مرة أخرى.";
+
+    // ترجمة الأخطاء للطالب
+    if (error.code === "auth/user-not-found") {
+      message = "هذا البريد الإلكتروني غير مسجل لدينا في المنصة.";
+    } else if (error.code === "auth/invalid-email") {
+      message = "صيغة البريد الإلكتروني غير صحيحة.";
+    } else if (error.code === "auth/too-many-requests") {
+      message = "لقد قمت بطلبات كثيرة، انتظر قليلاً وحاول ثانية.";
+    }
+
+    showAlert(message, "تنبيه ⚠️");
+  } finally {
+    // إعادة الزر لحالته الأصلية
+    submitBtn.disabled = false;
+    submitBtn.innerText = originalText;
+  }
+});
+</script>
+</body>
+</html>
